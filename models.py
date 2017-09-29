@@ -18,6 +18,13 @@ class User(models.Model):
     mailCheck = models.BooleanField(default = False)
     combineIdList = models.CharField(max_length = 50, null = True, default = '[0]')
 
+    def get(user_key):
+        try:
+            return User.objects.get(user_key = user_key)
+        except:
+            User.objects.create(user_key = user_key)
+            return User.objects.get(user_key = user_key)
+
     def setMailCheck(self, mailChecked):
         self.mailCheck = mailChecked
 
