@@ -58,6 +58,8 @@ class Keyword(models.Model):
     def showAll():
         print('=====================KEYWORD======================')
         for keyword in Keyword.objects.all():
+            if not Combine.objects.filter(keyword = keyword):
+                print('?', end = '')
             print(keyword.expression, end = ' --> ')
             print(keyword.elements)
         print('')
@@ -133,6 +135,8 @@ class Combine(models.Model):
             combineIds = Combine.getDistinctCombineIds()
 
         for combineId in combineIds:
+            if not Response.getResponsesWithCombineId(combineId):
+                print('?', end = '')
             print(str(combineId), end = '\t\t')
             combines = Combine.objects.filter(combineId = combineId)
             for combine in combines:
@@ -304,6 +308,7 @@ class Response(models.Model):
         return None
 
     def getResponseText(user, userMessage):
+        print('getResponseText 진입')
         keywordList = Combine.convertKeywords(userMessage)
         combineIdFromKeywordList = Combine.getCombineIdByKeywordList(keywordList)
         #print(userMessage + '라는 말은 '+ str(keywordList) + '로 변환 되었으며, combineId는 ' + str(combineIdFromKeywordList))
@@ -330,7 +335,7 @@ class Response(models.Model):
 
     def getMessage(self):
         if self.responseType == 'text':
-            message = self.message
+            message = eval(self.message)
         elif self.responseType == 'func':
             # 뭔가를 호출하고 그것이 리턴해야대
             pass
@@ -338,6 +343,7 @@ class Response(models.Model):
         if type(message) == type(list()):
             rdnum = random.randrange(0, len(message))
             message = message[rdnum]
+            return message
         elif type(message) == type(str()):
             return message
 
@@ -504,7 +510,6 @@ class Handler():
 
             print(str(keywords))
 
-
     def createCombine():
         Combine.showAll()
         keywords = Handler.selectKeywords()
@@ -530,10 +535,13 @@ class Handler():
         Combine.showAll()
         combineIds = list()
         while(True):
-            combineId = input('Combine 조합을 생성합니다. combineId를 선택하세요. [exit()] 종료 > ')
+            combineId = input('Combine 조합 생성중. combineId를 선택하세요. [exit()] 종료 > ')
 
             if combineId == 'exit()':
-                return combineIds
+                if combineIds:
+                    return combineIds
+                else:
+                    return None
 
             try:
                 combineId = int(combineId)
@@ -541,7 +549,7 @@ class Handler():
                 print('정수를 입력하세요.')
                 continue
 
-            if Combine.objects.filter(combineId = combineId):
+            if Combine.objects.filter(combineId = combineId) or combineId == 0:
                 combineIds.append(combineId)
             else:
                 print('존재하지 않는 combineId 입니다.')
@@ -551,12 +559,16 @@ class Handler():
     def createResponse():
         print('Response를 생성할 combineIdList를 만듭니다.')
         combineIdList = Handler.selectCombines()
+        if not combineIdList:
+            print('취소되었습니다')
+            return
 
         while(True):
             choice = input('응답형식을 선택하세요 : [1]텍스트 [2]함수 [exit()]종료 > ')
 
             if choice == '1':
-                message = input('응답할 텍스트를 입력하세요 > ')
+                #message = input('응답할 텍스트를 입력하세요 > ')
+                message = str(Handler.elementsBuilder())
                 Response.createResponse(combineIdList, 'text', message)
                 return
 
@@ -584,7 +596,6 @@ class Handler():
         else:
             print('삭제가 취소되었습니다')
 
-
 class Menu():
     def start():
         while(True):
@@ -604,7 +615,7 @@ class Menu():
             #print('* 문장을 던지면 해당 문장의 Keyword와 응답을 표시하는 메뉴')
 
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
-            print('')
+            print()
 
             if c == '1': # show all keywords
                 Keyword.showAll()
