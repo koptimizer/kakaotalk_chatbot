@@ -267,17 +267,14 @@ class Response(models.Model):
             result += Combine.str(combineId)
         return result
 
-    def createResponse(combineIdList, responseType, msgOrFunc): # type은 'func', 'text' 둘중 하나
+    def createResponse(combineIdList, responseType, msgOrFunc): # responseType은 'func', 'text' 둘중 하나
         if type(combineIdList) != type(list()):
             print('combineIdList는 리스트타입이어야 합니다.')
             return False
+
         try:
-            if responseType == 'text':
-                Response.objects.create(combineIdList = combineIdList, message = msgOrFunc, responseType = 'text')
-                return True
-            elif reseponseType == 'func':
-                Response.objects.create(combineIdList = combineIdList, func = msgOrFunc, responseType = 'func')
-                return True
+            Response.objects.create(combineIdList = combineIdList, message = msgOrFunc, responseType = responseType)
+            return True
         except:
             print('이미 존재하는 combineIdList 입니다')
             return False
@@ -318,7 +315,6 @@ class Response(models.Model):
         print('getResponseText 진입')
         keywordList = Combine.convertKeywords(userMessage)
         combineIdFromKeywordList = Combine.getCombineIdByKeywordList(keywordList)
-        #print(userMessage + '라는 말은 '+ str(keywordList) + '로 변환 되었으며, combineId는 ' + str(combineIdFromKeywordList))
 
         # user의 combineIdList에 keywordList의 CombineId를 추가해야함.
         combineIdList = eval(user.combineIdList)
@@ -338,7 +334,7 @@ class Response(models.Model):
             print([combineIdFromKeywordList])
             return response.getMessage()
         else:
-            return '해당하는 response가 존재하지 않음 ' + str(response)
+            return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
 
     def getMessage(self):
         if self.responseType == 'text':
