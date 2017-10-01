@@ -19,8 +19,7 @@ class User(models.Model):
     combineIdList = models.CharField(max_length = 50, null = True, default = '[0]')
 
     def get(user_key):
-        try:
-            return User.objects.get(user_key = user_key)
+        try: return User.objects.get(user_key = user_key)
         except:
             User.objects.create(user_key = user_key)
             return User.objects.get(user_key = user_key)
@@ -138,8 +137,7 @@ class Combine(models.Model):
         print('combineId\texpression')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
 
-        if not combineIds:
-            combineIds = Combine.getDistinctCombineIds()
+        if not combineIds: combineIds = Combine.getDistinctCombineIds()
 
         for combineId in combineIds:
             if not Response.getResponsesWithCombineId(combineId):
@@ -199,15 +197,13 @@ class Combine(models.Model):
                 else:
                     duplicated = False
                     break
-            if duplicated:
-                return combineId
+            if duplicated: return combineId
         return 0
 
     def genCombineId():
         if Combine.objects.all():
             return Combine.objects.all().order_by('combineId').last().combineId + 1
-        else:
-            return 1
+        else: return 1
 
     def convertKeywords(userMessage):
         # 자연어 문장을 Combine과 비교가능한 형태인 Keyword 리스트로 반환한다.
@@ -226,10 +222,8 @@ class Response(models.Model):
     func = models.CharField(max_length = 30, null = True, default = None)
 
     def __str__(self):
-        if self.responseType == 'text':
-            message = self.message
-        elif self.responseType == 'func':
-            message = '[함수]' + self.func
+        if self.responseType == 'text': message = self.message
+        elif self.responseType == 'func': message = '[함수]' + self.func
 
         return str(self.combineIdList) + '|' + message
 
@@ -293,8 +287,7 @@ class Response(models.Model):
     def getResponsesWithCombineId(combineIds):
         # 해당 combineId를 가지는 Response가 있으면 해당 Response 객체 리스트를 리턴.
 
-        if type(combineIds) == type(int()):
-            combineIds = [combineIds]
+        if type(combineIds) == type(int()): combineIds = [combineIds]
 
         resultResponses = list()
         for response in Response.objects.all().order_by('combineIdList'):
@@ -307,12 +300,10 @@ class Response(models.Model):
     def getResponse(combineIdList):
         # combineIdList는 리스트 타입
         for response in Response.objects.all():
-            if combineIdList == eval(response.combineIdList):
-                return response
+            if combineIdList == eval(response.combineIdList): return response
         return None
 
     def getResponseText(user, userMessage):
-        print('getResponseText 진입')
         keywordList = Combine.convertKeywords(userMessage)
         combineIdFromKeywordList = Combine.getCombineIdByKeywordList(keywordList)
 
@@ -331,57 +322,41 @@ class Response(models.Model):
 
         response = Response.getResponse([combineIdFromKeywordList]) # user의 combineIdList를 업데이트 하고 keywordList에서 찾은 combineId로만 탐색
         if response:
-            print([combineIdFromKeywordList])
-            return response.getMessage()
-        else:
-            return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
+            #print([combineIdFromKeywordList])
+            return Response.getMessage(response, user)
+        else: return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
 
-    def getMessage(self):
-        if self.responseType == 'text':
-            message = eval(self.message)
-        elif self.responseType == 'func':
-            # 뭔가를 호출하고 그것이 리턴해야대
+    def getMessage(response, user):
+        if response.responseType == 'text':
+            message = eval(response.message)
+            randNum = random.randrange(0, len(message))
+            return message[randNum]
+
+        elif response.responseType == 'func':
             pass
-
-        if type(message) == type(list()):
-            rdnum = random.randrange(0, len(message))
-            message = message[rdnum]
-            return message
-        elif type(message) == type(str()):
-            return message
 
 class Handler():
     # 대화형 메소드 클래스
     def YoN(text):
         while(True):
             yon = input(text)
-            if yon == 'y':
-                return True
-            elif yon == 'n':
-                return False
-            else:
-                continue
+            if yon == 'y': return True
+            elif yon == 'n': return False
+            else: continue
 
     def createKeyword():
-        # 새로운 Keyword 생성
-        # elements를 빌드
-        # expression을 입력
         Keyword.showAll()
         expression = input('expression? > ')
-
-        if expression == 'exit()':
-            return
+        if expression == 'exit()': return
 
         elements = Handler.elementsBuilder()
-
         Keyword.createKeyword(elements, expression)
         print('Keyword가 생성되었습니다')
 
     def removeKeyword():
         Keyword.showAll()
         expression = input('expression? > ')
-        if expression == 'exit()':
-            return
+        if expression == 'exit()': return
 
         try:
             target = Keyword.objects.get(expression = expression)
@@ -392,14 +367,12 @@ class Handler():
         combineIds = Combine.getDistinctCombineIds(target)
         if combineIds:
             Combine.showAll(combineIds)
-            if not Handler.YoN('[경고] 위 Combine 데이터가 삭제될 것입니다. [y/n] > '):
-                return False
+            if not Handler.YoN('[경고] 위 Combine 데이터가 삭제될 것입니다. [y/n] > '): return False
 
         responses = Response.getResponsesWithCombineId(combineIds)
         if responses:
             Response.showAll(responses)
-            if not Handler.YoN('[경고] 위 Response 데이터가 삭제될 것입니다. [y/n] > '):
-                return False
+            if not Handler.YoN('[경고] 위 Response 데이터가 삭제될 것입니다. [y/n] > '): return False
 
         if not (responses or combineIds):
             if Handler.YoN('정말로 삭제하시겠습니까? [y/n] > '):
@@ -415,11 +388,9 @@ class Handler():
         Keyword.showAll()
 
         expression = input('element를 수정할 Keyword의 expression을 입력하세요. [exit()] 종료 > ')
-        if expression == 'exit()':
-            return
+        if expression == 'exit()': return
 
-        try:
-            keyword = Keyword.objects.get(expression = expression)
+        try: keyword = Keyword.objects.get(expression = expression)
         except:
             print('존재하지 않는 Keyword 입니다.')
             return
@@ -429,23 +400,17 @@ class Handler():
         Keyword.modifyKeyword(elements, expression)
 
     def elementsBuilder(elements = None):
-        if type(elements) == type(str()):
-            elements = eval(elements)
+        if type(elements) == type(str()): elements = eval(elements)
 
-        if not elements:
-            elements = list()
+        if not elements: elements = list()
 
         while(True):
             print(str(elements))
             choice = input('[1]추가 [2]수정 [3]삭제 [exit()]완료 > ')
-            if choice == '1':
-                Handler.createElement(elements)
-            elif choice == '2':
-                Handler.modifyElement(elements)
-            elif choice == '3':
-                Handler.removeElement(elements)
-            elif choice == 'exit()':
-                return elements
+            if choice == '1': Handler.createElement(elements)
+            elif choice == '2': Handler.modifyElement(elements)
+            elif choice == '3': Handler.removeElement(elements)
+            elif choice == 'exit()': return elements
 
     def createElement(elements):
         Keyword.showElements(elements)
@@ -455,11 +420,9 @@ class Handler():
     def removeElement(elements):
         Keyword.showElements(elements)
         index = input('삭제할 element 인덱스를 입력하세요 > ')
-        if index == 'exit()':
-            return
+        if index == 'exit()': return
 
-        try:
-            index = int(index)
+        try: index = int(index)
         except:
             print('정수만 입력이 가능합니다')
             return
@@ -475,11 +438,9 @@ class Handler():
     def modifyElement(elements):
         Keyword.showElements(elements)
         index = input('수정할 element의 인덱스를 입력하세요 > ')
-        if index == 'exit()':
-            return
+        if index == 'exit()': return
 
-        try:
-            index = int(index)
+        try: index = int(index)
         except:
             print('정수만 입력이 가능합니다')
             return
@@ -488,10 +449,8 @@ class Handler():
             updateElement = input('수정전 > ' + elements[index] + '\n수정중 > ')
             if Handler.YoN('수정할까요? [y/n] > '):
                 elements[index] = updateElement
-            else:
-                print('취소하였습니다.')
-        else:
-            print('해당 index는 존재하지 않습니다.')
+            else: print('취소하였습니다.')
+        else: print('해당 index는 존재하지 않습니다.')
         print()
 
     def selectKeywords():
@@ -501,15 +460,11 @@ class Handler():
             expression = input('Keyword 조합을 생성합니다. 선택할 expression을 입력하세요. [exit()] 완료 > ')
             try:
                 item = Keyword.objects.get(expression = expression)
-                if item in keywords:
-                    print('이미 입력된 Keyword 입니다.')
-                else:
-                    keywords.append(item)
+                if item in keywords: print('이미 입력된 Keyword 입니다.')
+                else: keywords.append(item)
             except:
-                if expression == 'exit()':
-                    return keywords
-                else:
-                    print('해당하는 expression이 존재하지 않음')
+                if expression == 'exit()': return keywords
+                else: print('해당하는 expression이 존재하지 않음')
 
             print(str(keywords))
 
@@ -521,11 +476,9 @@ class Handler():
     def removeCombine():
         Combine.showAll()
         combineId = input('제거할 Combine의 combineId를 입력하세요. [exit()] 종료 > ')
-        if combineId == 'exit()':
-            return
+        if combineId == 'exit()': return
 
-        try:
-            combineId = int(combineId)
+        try: combineId = int(combineId)
         except:
             print('정수를 입력하세요')
             return
@@ -541,21 +494,17 @@ class Handler():
             combineId = input('Combine 조합 생성중. combineId를 선택하세요. [exit()] 종료 > ')
 
             if combineId == 'exit()':
-                if combineIds:
-                    return combineIds
-                else:
-                    return None
+                if combineIds: return combineIds
+                else: return None
 
-            try:
-                combineId = int(combineId)
+            try: combineId = int(combineId)
             except:
                 print('정수를 입력하세요.')
                 continue
 
             if Combine.objects.filter(combineId = combineId) or combineId == 0:
                 combineIds.append(combineId)
-            else:
-                print('존재하지 않는 combineId 입니다.')
+            else: print('존재하지 않는 combineId 입니다.')
 
             print(str(combineIds))
 
@@ -580,85 +529,59 @@ class Handler():
                 Response.createResponse(combineIdList, 'func', func)
                 return
 
-            elif choice == 'exit()':
-                return
+            elif choice == 'exit()': return
 
     def removeResponse():
         Response.showAll()
         responseId = input('삭제할 Response의 id를 입력하세요. [exit()]종료 > ')
-        if responseId == 'exit()':
-            return
+        if responseId == 'exit()': return
 
-        try:
-            responseId = int(responseId)
-        except:
-            print('정수를 입력하세요.')
+        try: responseId = int(responseId)
+        except: print('정수를 입력하세요.')
 
         if Handler.YoN('정말로 삭제하시겠습니까? [y/n] > '):
             Response.removeResponseById(responseId)
-        else:
-            print('삭제가 취소되었습니다')
+        else: print('삭제가 취소되었습니다')
+
+    def showAllKeywords(): Keyword.showAll()
+    def showAllCombines(): Combine.showAll()
+    def showAllResponses(): Response.showAll()
+
+    def test():
+        user = User.get(user_key = 'testuser')
+        while(True):
+            userMessage = input('[exit()]종료 > ')
+            if userMessage == 'exit()': return
+            print('응답 > ' + Response.getResponseText(user, userMessage))
 
 class Menu():
-    def start():
+    def init():
         while(True):
             print()
             print('=====================MENU=========================')
-            print('[1] show all keywords\t[3] modify a keyword(element)')
-            print('[2] create a keyword\t[4] remove a keyword')
+            print('[1] Keyword 목록 확인\t[3] Keyword 수정')
+            print('[2] Keyword 생성\t[4] Keyword 삭제')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-            print('[5] show all combines\t[7] remove a combine')
-            print('[6] create a combine')
+            print('[5] Combine 목록 확인\t[7] Combine 삭제')
+            print('[6] Combine 생성')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-            print('[8] show all response\t[10] remove a response')
-            print('[9] create a response')
+            print('[8] Response 목록 확인\t[10] Response 삭제')
+            print('[9] Response 생성')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[20] 직접 대화해보면서 테스트하기\n')
-            #print('* Response가 등록되지 않은 Combine을 탐색하도록!')
-            #print('* 문장을 던지면 해당 문장의 Keyword와 응답을 표시하는 메뉴')
-
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
             print()
 
-            if c == '1': # show all keywords
-                Keyword.showAll()
-
-            elif c == '2': # create a keyword
-                Handler.createKeyword()
-
-            elif c == '3': # modify a keyword
-                Handler.modifyKeyword()
-
-            elif c == '4': # remove a keyword
-                Handler.removeKeyword()
-
-            elif c == '5': # show all combines
-                Combine.showAll()
-
-            elif c == '6': # create a combine
-                Handler.createCombine()
-
-            elif c == '7': # remove a combine
-                Handler.removeCombine()
-
-            elif c == '8': # show all responses
-                Response.showAll()
-
-            elif c == '9': # create a response
-                Handler.createResponse()
-
-            elif c == '10': # remove a response
-                Handler.removeResponse()
-
-            elif c == '20':
-                text = input('테스트할 문장을 입력하세요. [exit()] 종료 > ')
-                if text == 'exit()':
-                    continue
-                jg = User.objects.get(user_name = '임종길')
-                print(Response.getResponseText(jg, text))
-
-            elif c == 'exit()':
-                return
-
-            else:
-                print('잘못된 입력입니다.')
+            if c == '1': Handler.showAllKeywords()
+            elif c == '2': Handler.createKeyword()
+            elif c == '3': Handler.modifyKeyword()
+            elif c == '4': Handler.removeKeyword()
+            elif c == '5': Handler.showAllCombines()
+            elif c == '6': Handler.createCombine()
+            elif c == '7': Handler.removeCombine()
+            elif c == '8': Handler.showAllResponses()
+            elif c == '9': Handler.createResponse()
+            elif c == '10': Handler.removeResponse()
+            elif c == '20': Handler.test()
+            elif c == 'exit()': return
+            else: print('잘못된 입력입니다.')
