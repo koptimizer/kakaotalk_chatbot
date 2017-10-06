@@ -96,7 +96,7 @@ class Log(models.Model):
 
 class Keyword(models.Model):
     elements = models.TextField()
-    expression = models.CharField(max_length = 30, null = False)
+    expression = models.CharField(max_length = 30, null = False, unique = True)
 
     def __str__(self):
         return self.expression + ' | ' + self.elements
@@ -109,6 +109,10 @@ class Keyword(models.Model):
             print(keyword.expression, end = ' --> ')
             print(keyword.elements)
         print('')
+
+    def getKeywordOrNone(expression):
+        try: return Keyword.objects.get(expression = expression)
+        except: return None
 
     def createKeyword(elements, expression):
         if type(elements) != type(str()):
@@ -400,16 +404,24 @@ class Handler():
 
     def createKeyword():
         Keyword.showAll()
-        expression = input('expression? > ')
+        expression = input('expression을 입력해주세요 > ')
         if expression == 'exit()': return
 
+        if Keyword.getKeywordOrNone(expression):
+            print('이미 존재하는 expression입니다')
+            return
+
         elements = Handler.elementsBuilder()
+        if not elements:
+            print('취소되었습니다')
+            return
+
         Keyword.createKeyword(elements, expression)
         print('Keyword가 생성되었습니다')
 
     def removeKeyword():
         Keyword.showAll()
-        expression = input('expression? > ')
+        expression = input('expression을 입력해주세요 > ')
         if expression == 'exit()': return
 
         try:
@@ -612,33 +624,58 @@ class Handler():
             if Handler.YoN(group_name + '(으)로 생성하시겠습니까? [y/n] > '):
                 Group.createGroup(group_name = group_name)
 
-    def manageGroupMembers():
+    #def manageGroupMembers():
         # User를 그룹에 추가 혹은 삭제
-        user_name = input('Group 소속을 변경하려는 User의 user_name를 입력하세요. [exit()]종료 > ')
-        if user_name == 'exit()':
+    #    user_name = input('Group 소속을 변경하려는 User의 user_name를 입력하세요. [exit()]종료 > ')
+    #    if user_name == 'exit()':
+    #        return
+
+    #    user = User.getOrNoneByName(user_name = user_name)
+    #    if user:
+    #        group = Handler.selectGroup()
+    #        if group:
+    #            user.setGroup(group)
+    #        else:
+    #            print('존재하지 않는 Group입니다')
+#
+#        else:
+#            print('존재하지 않는 User입니다')
+
+    def manageGroupMembers():
+        user = Handler.selectUser()
+        if not user:
             return
 
-        user = User.getOrNoneByName(user_name = user_name)
-        if user:
-            Group.showAll()
-            group = Handler.selectGroup()
-            if group:
-                user.setGroup(group)
-
-            else:
-                print('존재하지 않는 Group입니다')
-
+        group = Handler.selectGroup()
+        if group:
+            user.setGroup(group)
         else:
-            print('존재하지 않는 User입니다')
+            return
+
+    def selectUser():
+        while(True):
+            user_name = input('User의 user_name를 입력하세요 [exit()]종료 > ')
+            if user_name == 'exit()':
+                return None
+
+            user = User.getOrNoneByName(user_name = user_name)
+            if user:
+                return user
+            else:
+                print('존재하지 않는 User입니다')
 
     def selectGroup():
+        Group.showAll()
         while(True):
-            group_name = input('선택할 Group 이름을 입력하세요 > ')
+            group_name = input('선택할 Group 이름을 입력하세요 [exit()]종료 > ')
+            if group_name == 'exit()':
+                return None
+
             group = Group.get(group_name)
             if group:
                 return group
             else:
-                return None
+                print('존재하지 않는 Group입니다')
 
     def showAllKeywords(): Keyword.showAll()
     def showAllCombines(): Combine.showAll()
@@ -666,8 +703,8 @@ class Handler():
             print('[8] Response 목록 확인\t[10] Response 삭제')
             print('[9] Response 생성')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-            print('[11] User 목록 확인\t[12] Group 목록 확인')
-            print('[13] Group 생성\t\t[14] Group 멤버관리')
+            print('[1l] Group 목록 확인\t[13] Group 멤버관리')
+            print('[12] Group 생성\t\t')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[20] 직접 대화해보면서 테스트하기\n')
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
@@ -683,10 +720,10 @@ class Handler():
             elif c == '8': Handler.showAllResponses()
             elif c == '9': Handler.createResponse()
             elif c == '10': Handler.removeResponse()
-            elif c == '11': Handler.showAllUsers()
-            elif c == '12': Handler.showAllGroups()
-            elif c == '13': Handler.createGroup()
-            elif c == '14': Handler.manageGroupMembers()
+            #elif c == '11': Handler.showAllUsers()
+            elif c == '11': Handler.showAllGroups()
+            elif c == '12': Handler.createGroup()
+            elif c == '13': Handler.manageGroupMembers()
             elif c == '20': Handler.test()
             elif c == 'exit()': return
             else: print('잘못된 입력입니다.')
