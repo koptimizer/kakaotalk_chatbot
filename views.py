@@ -16,7 +16,7 @@ def message(request):
         userMessage = request_data['content']
         user_key = request_data['user_key']
 
-    user = User.get(user_key)
+    user = User.getOrCreate(user_key)
 
     text = Response.getResponseText(user, userMessage)
 

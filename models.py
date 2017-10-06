@@ -1,5 +1,8 @@
 from django.db import models
 from django.utils import timezone
+
+from main import funcMod
+
 import datetime
 import re
 import random
@@ -10,6 +13,26 @@ class Group(models.Model):
     def __str__(self):
         return self.group_name
 
+    def createGroup(group_name):
+        Group.objects.create(group_name = group_name)
+
+    def get(group_name):
+        try: return Group.objects.get(group_name = group_name)
+        except: return None
+
+    def showAll():
+        print('======================GROUP=======================')
+        print('group_name\tuser_name')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+        for group in Group.objects.all():
+            print(group.group_name, end = '\t')
+            users = list(User.objects.filter(group = group))
+            for user in users:
+                if users.index(user) != 0:
+                    print(end = ', ')
+                print(user.user_name + '(' + user.user_key + ')', end = '')
+            print()
+
 # 실제 db.sqlite3 파일에는 chatbot_User, chatbot_Mail 등과 같은 이름으로 테이블이 생성 된다.
 class User(models.Model):
     user_name = models.CharField(max_length = 30, default = None, null = True)
@@ -18,7 +41,22 @@ class User(models.Model):
     mailCheck = models.BooleanField(default = False)
     combineIdList = models.CharField(max_length = 50, null = True, default = '[0]')
 
-    def get(user_key):
+    def showAll():
+        print('======================USER========================')
+        print('user_key\tuser_name\tgroup')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+        for user in User.objects.all():
+            print(user.user_key + '\t' + str(user.user_name) + '\t\t' + str(user.group))
+
+    def getOrNoneByName(user_name):
+        try: return User.objects.get(user_name = user_name)
+        except: return None
+
+    def setGroup(self, group):
+        self.group = group
+        self.save()
+
+    def getOrCreate(user_key):
         try: return User.objects.get(user_key = user_key)
         except:
             User.objects.create(user_key = user_key)
@@ -26,9 +64,11 @@ class User(models.Model):
 
     def setMailCheck(self, mailChecked):
         self.mailCheck = mailChecked
+        self.save()
 
     def setName(self, name):
         self.user_name = name
+        self.save()
 
     def __str__(self):
         return self.user_key + '|' + str(self.user_name)
@@ -65,7 +105,7 @@ class Keyword(models.Model):
         print('=====================KEYWORD======================')
         for keyword in Keyword.objects.all():
             if not Combine.objects.filter(keyword = keyword):
-                print('?', end = '')
+                print('*', end = '')
             print(keyword.expression, end = ' --> ')
             print(keyword.elements)
         print('')
@@ -141,7 +181,7 @@ class Combine(models.Model):
 
         for combineId in combineIds:
             if not Response.getResponsesWithCombineId(combineId):
-                print('?', end = '')
+                print('*', end = '')
             print(str(combineId), end = '\t\t')
             combines = Combine.objects.filter(combineId = combineId)
             for combine in combines:
@@ -216,7 +256,8 @@ class Combine(models.Model):
         return keywords
 
 class Response(models.Model):
-    combineIdList = models.CharField(max_length = 50, null = False, default = [0], unique = True)
+    combineIdList = models.CharField(max_length = 50, null = False, default = [0])
+    group = models.ForeignKey(Group, on_delete = models.CASCADE, null = True)
     responseType = models.CharField(max_length = 10, null = False, default = 'text') # text or func
     message = models.TextField(default = None)
     func = models.CharField(max_length = 30, null = True, default = None)
@@ -233,13 +274,13 @@ class Response(models.Model):
 
         responses = Response.sort(responses)
         print('====================RESPONSE======================')
-        print('id\tcombineIdList\tmessage/func')
+        print('id\tgroup\tcombineIdList\tmessage/func')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
         for response in responses:
             if response.responseType == 'text':
-                print(str(response.id) + '\t' + Response.convert(response.combineIdList) + '\t\t' + str(response.message))
+                print(str(response.id) + '\t' + str(response.group) + '\t' + Response.convert(response.combineIdList) + '\t\t' + str(response.message))
             elif response.responseType == 'func':
-                print(str(response.id) + '\t' + Response.convert(response.combineIdList) + '\t\t[함수]' + str(response.func))
+                print(str(response.id) + '\t' + str(response.group) + '\t' + Response.convert(response.combineIdList) + '\t\t[함수]' + str(response.func))
         print()
 
     def sort(responses):
@@ -261,13 +302,13 @@ class Response(models.Model):
             result += Combine.str(combineId)
         return result
 
-    def createResponse(combineIdList, responseType, msgOrFunc): # responseType은 'func', 'text' 둘중 하나
+    def createResponse(combineIdList, responseType, msgOrFunc, group = None): # responseType은 'func', 'text' 둘중 하나
         if type(combineIdList) != type(list()):
             print('combineIdList는 리스트타입이어야 합니다.')
             return False
 
         try:
-            Response.objects.create(combineIdList = combineIdList, message = msgOrFunc, responseType = responseType)
+            Response.objects.create(combineIdList = combineIdList, message = msgOrFunc, responseType = responseType, group = group)
             return True
         except:
             print('이미 존재하는 combineIdList 입니다')
@@ -297,10 +338,27 @@ class Response(models.Model):
 
         return resultResponses
 
-    def getResponse(combineIdList):
+    #def getResponse(user, combineIdList):
         # combineIdList는 리스트 타입
-        for response in Response.objects.all():
-            if combineIdList == eval(response.combineIdList): return response
+        # user.group과 비교
+        # user의 group과 일치하는 response.group이 있으면 해당 response를 return
+        # 없으면 그냥..
+
+    #    for response in Response.objects.all():
+    #        if combineIdList == eval(response.combineIdList):
+    #            #if user.group == response.group:
+    #            return response
+    #    return None
+
+    def getResponse(user, combineIdList):
+        for response in Response.objects.filter(group = user.group):
+            if combineIdList == eval(response.combineIdList):
+                return response
+
+        for response in Response.objects.filter(group = None):
+            if combineIdList == eval(response.combineIdList):
+                return response
+
         return None
 
     def getResponseText(user, userMessage):
@@ -311,29 +369,25 @@ class Response(models.Model):
         combineIdList = eval(user.combineIdList)
         combineIdList.append(combineIdFromKeywordList)
 
-        response = Response.getResponse(combineIdList) # user의 combineIdList에 새로 keywordList에서 찾은 combineId를 추가한 리스트로 탐색
-        if response:
-            print(str(combineIdList))
-            # response.message 혹은 response.func를 반환해야함.
-            return response.getMessage()
+        response = Response.getResponse(user, combineIdList) # user의 combineIdList에 새로 keywordList에서 찾은 combineId를 추가한 리스트로 탐색
+        if response: return Response.getMessage(user, response)
 
         user.combineIdList = str([combineIdFromKeywordList])
         user.save()
 
-        response = Response.getResponse([combineIdFromKeywordList]) # user의 combineIdList를 업데이트 하고 keywordList에서 찾은 combineId로만 탐색
-        if response:
-            #print([combineIdFromKeywordList])
-            return Response.getMessage(response, user)
+        response = Response.getResponse(user, [combineIdFromKeywordList]) # user의 combineIdList를 업데이트 하고 keywordList에서 찾은 combineId로만 탐색
+        if response: return Response.getMessage(user, response)
         else: return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
 
-    def getMessage(response, user):
+    def getMessage(user, response):
         if response.responseType == 'text':
             message = eval(response.message)
             randNum = random.randrange(0, len(message))
             return message[randNum]
 
         elif response.responseType == 'func':
-            pass
+            message = funcMod.getFuncMessage(user, response)
+            return message
 
 class Handler():
     # 대화형 메소드 클래스
@@ -362,31 +416,26 @@ class Handler():
             target = Keyword.objects.get(expression = expression)
         except:
             print('Keyword 삭제 실패. expression이 존재하지 않습니다')
-            return False
+            return
 
         combineIds = Combine.getDistinctCombineIds(target)
         if combineIds:
             Combine.showAll(combineIds)
-            if not Handler.YoN('[경고] 위 Combine 데이터가 삭제될 것입니다. [y/n] > '): return False
+            if not Handler.YoN('[경고] 위 Combine 데이터가 삭제될 것입니다. [y/n] > '): return
 
         responses = Response.getResponsesWithCombineId(combineIds)
         if responses:
             Response.showAll(responses)
-            if not Handler.YoN('[경고] 위 Response 데이터가 삭제될 것입니다. [y/n] > '): return False
+            if not Handler.YoN('[경고] 위 Response 데이터가 삭제될 것입니다. [y/n] > '): return
 
         if not (responses or combineIds):
             if Handler.YoN('정말로 삭제하시겠습니까? [y/n] > '):
                 Keyword.removeKeyword(expression)
-                return True
             else:
                 print('취소되었습니다')
-                return False
 
     def modifyKeyword():
-        # elements, expression 무엇을 수정할지 선택
-        # elements는 별도로 내부에서 추가, 수정, 삭제 선택
         Keyword.showAll()
-
         expression = input('element를 수정할 Keyword의 expression을 입력하세요. [exit()] 종료 > ')
         if expression == 'exit()': return
 
@@ -396,12 +445,10 @@ class Handler():
             return
 
         elements = Handler.elementsBuilder(keyword.elements)
-
         Keyword.modifyKeyword(elements, expression)
 
     def elementsBuilder(elements = None):
         if type(elements) == type(str()): elements = eval(elements)
-
         if not elements: elements = list()
 
         while(True):
@@ -414,12 +461,12 @@ class Handler():
 
     def createElement(elements):
         Keyword.showElements(elements)
-        element = input('추가할 element를 입력하세요 > ')
+        element = input('추가할 요소를 입력하세요 > ')
         Keyword.createElement(elements, element)
 
     def removeElement(elements):
         Keyword.showElements(elements)
-        index = input('삭제할 element 인덱스를 입력하세요 > ')
+        index = input('삭제할 요소의 번호를 입력하세요 > ')
         if index == 'exit()': return
 
         try: index = int(index)
@@ -433,11 +480,11 @@ class Handler():
             else:
                 print('취소되었습니다')
         else:
-            print('존재하지 않는 index입니다')
+            print('존재하지 않는 번호입니다')
 
     def modifyElement(elements):
         Keyword.showElements(elements)
-        index = input('수정할 element의 인덱스를 입력하세요 > ')
+        index = input('수정할 요소의 번호를 입력하세요 > ')
         if index == 'exit()': return
 
         try: index = int(index)
@@ -450,7 +497,7 @@ class Handler():
             if Handler.YoN('수정할까요? [y/n] > '):
                 elements[index] = updateElement
             else: print('취소하였습니다.')
-        else: print('해당 index는 존재하지 않습니다.')
+        else: print('존재하지 않는 요소 번호입니다')
         print()
 
     def selectKeywords():
@@ -491,7 +538,7 @@ class Handler():
         Combine.showAll()
         combineIds = list()
         while(True):
-            combineId = input('Combine 조합 생성중. combineId를 선택하세요. [exit()] 종료 > ')
+            combineId = input('Combine 조합으로 생성할 combineId를 선택하세요[0]없음 [exit()] 종료 > ')
 
             if combineId == 'exit()':
                 if combineIds: return combineIds
@@ -504,32 +551,46 @@ class Handler():
 
             if Combine.objects.filter(combineId = combineId) or combineId == 0:
                 combineIds.append(combineId)
-            else: print('존재하지 않는 combineId 입니다.')
+            else: print('존재하지 않는 combineId 입니다')
 
             print(str(combineIds))
 
     def createResponse():
-        print('Response를 생성할 combineIdList를 만듭니다.')
+        #print('Response를 생성할 combineIdList를 만듭니다')
         combineIdList = Handler.selectCombines()
         if not combineIdList:
             print('취소되었습니다')
             return
 
         while(True):
+            group_name = input('Group 이름을 입력해주세요. [None]없음, [exit()]종료 > ')
+            if group_name == 'exit()':
+                return
+            elif group_name == 'None':
+                group = None
+            else:
+                group = Group.get(group_name)
+                if group:
+                    break
+                else:
+                    print('존재하지 않는 Group입니다.')
+                    continue
+
+        while(True):
             choice = input('응답형식을 선택하세요 : [1]텍스트 [2]함수 [exit()]종료 > ')
 
             if choice == '1':
-                #message = input('응답할 텍스트를 입력하세요 > ')
                 message = str(Handler.elementsBuilder())
-                Response.createResponse(combineIdList, 'text', message)
+                Response.createResponse(combineIdList, 'text', message, group)
                 return
 
             elif choice == '2':
                 func = input('사용할 함수명을 입력하세요. > ')
-                Response.createResponse(combineIdList, 'func', func)
+                Response.createResponse(combineIdList, 'func', func, group)
                 return
 
             elif choice == 'exit()': return
+            else: print('잘못된 입력입니다')
 
     def removeResponse():
         Response.showAll()
@@ -543,19 +604,56 @@ class Handler():
             Response.removeResponseById(responseId)
         else: print('삭제가 취소되었습니다')
 
+    def createGroup():
+        group_name = input('생성할 Group 명을 입력하세요 [exit()]종료 > ')
+        if group_name == 'exit()':
+            return
+        else:
+            if Handler.YoN(group_name + '(으)로 생성하시겠습니까? [y/n] > '):
+                Group.createGroup(group_name = group_name)
+
+    def manageGroupMembers():
+        # User를 그룹에 추가 혹은 삭제
+        user_name = input('Group 소속을 변경하려는 User의 user_name를 입력하세요. [exit()]종료 > ')
+        if user_name == 'exit()':
+            return
+
+        user = User.getOrNoneByName(user_name = user_name)
+        if user:
+            Group.showAll()
+            group = Handler.selectGroup()
+            if group:
+                user.setGroup(group)
+
+            else:
+                print('존재하지 않는 Group입니다')
+
+        else:
+            print('존재하지 않는 User입니다')
+
+    def selectGroup():
+        while(True):
+            group_name = input('선택할 Group 이름을 입력하세요 > ')
+            group = Group.get(group_name)
+            if group:
+                return group
+            else:
+                return None
+
     def showAllKeywords(): Keyword.showAll()
     def showAllCombines(): Combine.showAll()
     def showAllResponses(): Response.showAll()
+    def showAllUsers(): User.showAll()
+    def showAllGroups(): Group.showAll()
 
     def test():
-        user = User.get(user_key = 'testuser')
+        user = User.getOrCreate(user_key = 'testuser')
         while(True):
             userMessage = input('[exit()]종료 > ')
             if userMessage == 'exit()': return
             print('응답 > ' + Response.getResponseText(user, userMessage))
 
-class Menu():
-    def init():
+    def menu():
         while(True):
             print()
             print('=====================MENU=========================')
@@ -567,6 +665,9 @@ class Menu():
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[8] Response 목록 확인\t[10] Response 삭제')
             print('[9] Response 생성')
+            print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+            print('[11] User 목록 확인\t[12] Group 목록 확인')
+            print('[13] Group 생성\t\t[14] Group 멤버관리')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[20] 직접 대화해보면서 테스트하기\n')
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
@@ -582,6 +683,10 @@ class Menu():
             elif c == '8': Handler.showAllResponses()
             elif c == '9': Handler.createResponse()
             elif c == '10': Handler.removeResponse()
+            elif c == '11': Handler.showAllUsers()
+            elif c == '12': Handler.showAllGroups()
+            elif c == '13': Handler.createGroup()
+            elif c == '14': Handler.manageGroupMembers()
             elif c == '20': Handler.test()
             elif c == 'exit()': return
             else: print('잘못된 입력입니다.')
