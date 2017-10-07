@@ -64,8 +64,7 @@ class Group(models.Model):
                     if Tools.YoN('변경하시겠습니까? [y/n] > '):
                         group.setGroupName(modGroupName)
                         print('변경되었습니다')
-                    else:
-                        print('취소되었습니다')
+                    else: print('취소되었습니다')
 
                 elif choice == '2':
                     group = Group.manages.selectGroup()
@@ -88,11 +87,9 @@ class Group(models.Model):
                     user.setGroup(None)
                     print('삭제되었습니다')
 
-                elif choice == 'exit()':
-                    return
+                elif choice == 'exit()': return
 
-                else:
-                    continue
+                else: continue
 
         def selectGroup():
             Group.showAll()
@@ -240,12 +237,12 @@ class Tools():
 
         def create(elements):
             Tools.listBuilder.show(elements)
-            element = input('추가할 요소를 입력하세요 > ')
+            element = input('추가할 문자열를 입력하세요 > ')
             elements.append(element)
 
         def remove(elements):
             Tools.listBuilder.show(elements)
-            index = input('삭제할 요소의 번호를 입력하세요 > ')
+            index = input('삭제할 문자열의 번호를 입력하세요 > ')
             if index == 'exit()': return
 
             try: index = int(index)
@@ -264,7 +261,7 @@ class Tools():
 
         def modify(elements):
             Tools.listBuilder.show(elements)
-            index = input('수정할 요소의 번호를 입력하세요 > ')
+            index = input('수정할 문자열의 번호를 입력하세요 > ')
             if index == 'exit()': return
 
             try: index = int(index)
@@ -277,7 +274,7 @@ class Tools():
                 if Tools.YoN('수정할까요? [y/n] > '):
                     elements[index] = updateElement
                 else: print('취소하였습니다.')
-            else: print('존재하지 않는 요소 번호입니다')
+            else: print('존재하지 않는 문자열 번호입니다')
             print()
 
         def show(elements):
@@ -613,6 +610,7 @@ class Response(models.Model):
         print('올바르지 않은 responseType')
         return False
 
+
     def removeResponseById(id):
         try:
             Response.objects.get(id = id).delete()
@@ -764,8 +762,23 @@ class Response(models.Model):
             print('수정되었습니다')
 
 
-class menu():
+class manager():
+
     def init():
+        # 초기에 여기서 init을 해주어야 inflate을 호출가능 하도록 해야 할 듯?
+        # init 했는지 안했는지는 관리자의 USER_KEY를 입력함에 따라..?
+        # Response의 combineIdList = [0]이 등록되어야 함
+
+        print('Keyword에 등록되지 않아 봇이 알아들을 수 없는 사용자의 질문에 대해 기본적으로 응답할 메시지를 등록해야 합니다\n')
+        print('다음 문자열 리스트 빌더에 등록되는 메시지에서 랜덤으로 사용자에게 응답합니다')
+        elements = Tools.listBuilder.build()
+        Response.createResponse([0], 'text', elements, group = None)
+        print('성공적으로 생성되었습니다.')
+
+    def inflate():
+        if not Response.getResponsesWithCombineId([0]):
+            manager.init()
+
         while(True):
             print()
             print('=====================MENU=========================')
@@ -782,8 +795,6 @@ class menu():
             print('[13] Group 생성\t\t[15] Group 삭제')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[20] 직접 대화해보면서 테스트하기\n')
-            # 필요한것
-            # Response 수정 항목 추가
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
             print()
 
