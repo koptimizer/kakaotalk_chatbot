@@ -144,6 +144,7 @@ class User(models.Model):
     group = models.ForeignKey(Group, on_delete = models.SET_NULL, null = True, default = None)
     mailCheck = models.BooleanField(default = False)
     combineIdList = models.CharField(max_length = 50, null = True, default = '[0]')
+    messageList = models.TextField(default = '[]')
 
     def showAll():
         print('======================USER========================')
@@ -162,6 +163,13 @@ class User(models.Model):
 
     def setCombineIdList(self, combineIdList):
         self.combineIdList = combineIdList
+        self.save()
+
+    def getMessageList(self):
+        return self.messageList
+
+    def setMessageList(self, messageList):
+        self.messageList = str(messageList)
         self.save()
 
     def getOrCreate(user_key):
@@ -194,7 +202,6 @@ class User(models.Model):
                 else:
                     print('존재하지 않는 User입니다')
 
-
 class Mail(models.Model):
     # 만약 여기서 참조하는 User의 데이터가 지워지면 CASCADE 옵션에 의해 같이 삭제
     # ForeignKey는 해당 인스턴스를 파라메터로 넘겨주어야 함
@@ -205,6 +212,34 @@ class Mail(models.Model):
 
     def __str__(self):
         return self.sender.user_name + '|' + self.message
+
+    def getNumOfMails(user):
+        return len(Mail.objects.filter(receiver = user))
+
+    def readMail(user):
+        if Mail.getNumOfMails(user) == 0:
+            return '메일함이 비었어요~*'
+
+        mail = Mail.objects.filter(receiver = user).order_by('-datetime')[0]
+        date = datetime.strptime(str(mail.datetime), '%Y-%m-%d %H:%M:%S.%f')
+
+        week = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
+
+        if date.hour <= 11:
+            hour = '오전 ' + str(date.hour)
+        elif date.hour == 12:
+            hour = '오후 ' + str(date.hour)
+        elif date.hour > 12:
+            hour = '오후 ' + str(date.hour - 12)
+
+        botMessage = str(date.year) + '년 ' + str(date.month) + '월 ' + str(date.day) + '일 ' + week[date.weekday()] + '\n' + hour + '시 ' + str(date.minute) + '분\n' + '발신자 : '  + mail.sender.user_name + '\n\n' + mail.message
+
+        mail.delete()
+
+        return botMessage
+
+    def sendMail(sender, receiver, message):
+        Mail.objects.create(sender = sender, receiver = receiver, message = meessage)
 
 class Log(models.Model):
     user = models.ForeignKey(User, on_delete = models.CASCADE)
@@ -341,11 +376,11 @@ class Keyword(models.Model):
     class manages():
         def createKeyword():
             Keyword.showAll()
-            expression = input('expression을 입력해주세요 > ')
+            expression = input('생성할 Keyword의 expression을 입력하세요 > ')
             if expression == 'exit()': return
 
             if Keyword.getKeywordOrNone(expression):
-                print('이미 존재하는 expression입니다')
+                print('이미 존재하는 Keyword입니다')
                 return
 
             elements = Tools.listBuilder.build()
@@ -358,13 +393,13 @@ class Keyword(models.Model):
 
         def removeKeyword():
             Keyword.showAll()
-            expression = input('expression을 입력해주세요 > ')
+            expression = input('삭제할 Keyword의 expression을 입력하세요 > ')
             if expression == 'exit()': return
 
             try:
                 target = Keyword.objects.get(expression = expression)
             except:
-                print('Keyword 삭제 실패. expression이 존재하지 않습니다')
+                print('Keyword 삭제 실패. 존재하지 않는 Keyword입니다')
                 return
 
             combineIds = Combine.getDistinctCombineIds(target)
@@ -553,7 +588,6 @@ class Combine(models.Model):
 
                 print(str(combineIds))
 
-
 class Response(models.Model):
     combineIdList = models.CharField(max_length = 50, null = False, default = [0])
     group = models.ForeignKey(Group, on_delete = models.CASCADE, null = True)
@@ -679,9 +713,15 @@ class Response(models.Model):
         combineIdList.append(combineIdFromKeywordList)
 
         response = Response.getResponse(user, combineIdList) # user의 combineIdList에 새로 keywordList에서 찾은 combineId를 추가한 리스트로 탐색
-        if response: return Response.getMessage(user, response)
+        if response:
+            user.setCombineIdList(str(combineIdList))
+            messageList = eval(user.getMessageList())
+            messageList.append(userMessage)
+            user.setMessageList(messageList)
+            return Response.getMessage(user, response)
 
         user.setCombineIdList(str([combineIdFromKeywordList]))
+        user.setMessageList([userMessage])
 
         response = Response.getResponse(user, [combineIdFromKeywordList]) # user의 combineIdList를 업데이트 하고 keywordList에서 찾은 combineId로만 탐색
         if response: return Response.getMessage(user, response)
@@ -711,6 +751,7 @@ class Response(models.Model):
                     return
                 elif group_name == 'None':
                     group = None
+                    break
                 else:
                     group = Group.get(group_name)
                     if group:
@@ -723,7 +764,7 @@ class Response(models.Model):
                 choice = input('응답형식을 선택하세요 : [1]텍스트 [2]함수 [exit()]종료 > ')
 
                 if choice == '1':
-                    message = str(Handler.elementsBuilder())
+                    message = str(Tools.listBuilder.build())
                     if Response.createResponse(combineIdList, 'text', message, group):
                         print('생성되었습니다')
                     return
