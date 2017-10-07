@@ -25,7 +25,7 @@ class Group(models.Model):
         print('group_name\tuser_name')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
         if targetGroup:
-            groups = targetGroup
+            groups = [targetGroup]
         else:
             groups = Group.objects.all()
 
