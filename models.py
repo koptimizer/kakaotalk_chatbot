@@ -45,17 +45,54 @@ class Group(models.Model):
             return
         group.delete()
 
+    def setGroupName(self, group_name):
+        self.group_name = group_name
+        self.save()
+
     class manages():
         def manageGroup():
-            user = User.manages.selectUser()
-            if not user:
-                return
+            # 향후에는 Group명 수정, 멤버수정 두가지를 여기서 처리 할 수 있도록 하는게 좋을 듯.
+            while(True):
+                Group.showAll()
+                choice = input('\n[1]Group명 변경 [2]Group멤버 추가 [3]Group멤버 삭제 [exit()]종료 > ')
+                if choice == '1':
+                    group = Group.manages.selectGroup()
+                    if not group: continue
 
-            group = Group.manages.selectGroup()
-            if group:
-                user.setGroup(group)
-            else:
-                return
+                    print('변경전>' + group.group_name)
+                    modGroupName = input('변경후>')
+                    if Tools.YoN('변경하시겠습니까? [y/n] > '):
+                        group.setGroupName(modGroupName)
+                        print('변경되었습니다')
+                    else:
+                        print('취소되었습니다')
+
+                elif choice == '2':
+                    group = Group.manages.selectGroup()
+                    if not group: continue
+
+                    user = User.manages.selectUser()
+                    if not user: continue
+
+                    if user.group == group:
+                        print('이미 해당 Group 소속입니다')
+                    else:
+                        user.setGroup(group)
+                        print('추가되었습니다')
+
+                elif choice == '3':
+                    Group.showAll()
+                    user = User.manages.selectUser()
+                    if not user: continue
+
+                    user.setGroup(None)
+                    print('삭제되었습니다')
+
+                elif choice == 'exit()':
+                    return
+
+                else:
+                    continue
 
         def selectGroup():
             Group.showAll()
@@ -79,7 +116,6 @@ class Group(models.Model):
                     Group.createGroup(group_name = group_name)
 
         def removeGroup():
-            # 향후에는 Group명 수정, 멤버수정 두가지를 여기서 처리 할 수 있도록 하는게 좋을 듯.
             Group.showAll()
             group_name = input('삭제할 Group 명을 입력하세요 > ')
 
