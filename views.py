@@ -4,6 +4,7 @@ from django.http import HttpResponse
 
 from main.models import User
 from main.models import Response
+from main.models import Log
 
 import json
 
@@ -18,11 +19,13 @@ def message(request):
 
     user = User.getOrCreate(user_key)
 
-    text = Response.getResponseText(user, userMessage)
+    botMessage = Response.getResponseText(user, userMessage)
 
-    testResult = json.dumps({'message' : {'text' : text}})
+    Log.write(user, userMessage, botMessage)
 
-    return HttpResponse(testResult)
+    botMessageDumped = json.dumps({'message' : {'text' : botMessage}})
+
+    return HttpResponse(botMessageDumped)
 
 def keyboard(request):
     result = json.dumps({'type' : 'text'})

@@ -14,7 +14,7 @@ ex) '^뭐[해(하니)]\??$' -> '뭐해'
 
 3. 1depth 이상의 대화를 정의할 수 있습니다.
 
-3-1. Response 에서 Combine 조합을 순서대로 정의하면 특정 대화 순서에 맞춰서 응답을 별도로 지정할 수 있습니다. 예를들어, combineIdList = [1,3] 은 combineId가 1인 Combine이 호출되고 다음으로 CcombineId가 3인 Combine이 호출될 경우의 봇의 응답 메시지를 설정이 가능합니다.
+3-1. Response 에서 Combine 조합을 순서대로 정의하면 특정 대화 순서에 맞춰서 응답을 별도로 지정할 수 있습니다. 예를들어, combineIdList = [1,3] 은 combineId가 1인 Combine이 호출되고 다음으로 combineId가 3인 Combine이 호출될 경우의 봇의 응답 메시지를 설정이 가능합니다.
 
 4. Response 에서 combineIdList = [0] 은 사용자의 메시지가 어떤 키워드도 인식되지 않을 경우 전송할 봇의 응답을 지정해 줄 수 있습니다.
 

@@ -8,10 +8,9 @@ import re
 import random
 
 class Group(models.Model):
-    group_name = models.CharField(max_length = 30, primary_key = True)
+    group_name = models.CharField(max_length = 30, null = False, unique = True)
 
-    def __str__(self):
-        return self.group_name
+    def __str__(self): return self.group_name
 
     def createGroup(group_name):
         Group.objects.create(group_name = group_name)
@@ -24,10 +23,8 @@ class Group(models.Model):
         print('======================GROUP=======================')
         print('group_name\tuser_name')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-        if targetGroup:
-            groups = [targetGroup]
-        else:
-            groups = Group.objects.all()
+        if targetGroup: groups = [targetGroup]
+        else: groups = Group.objects.all()
 
         for group in groups:
             print(group.group_name, end = '\t\t')
@@ -122,18 +119,23 @@ class Group(models.Model):
                 return
 
             # 해당 그룹에 속해있는 User 목록
-            Group.showAll(targetGroup)
-            if not Tools.YoN('위 User들의 Group 상태가 None이 됩니다. [y/n] > '):
-                return
+            if User.objects.filter(group = targetGroup):
+                Group.showAll(targetGroup)
+                if not Tools.YoN('위 User들의 Group 상태가 None이 됩니다. [y/n] > '):
+                    return
 
             # 해당 그룹에 속해있는 Response 목록
+            print('targetGroup = ' + str(targetGroup))
             responses = Response.objects.filter(group = targetGroup)
-            Response.showAll(responses)
-            if not Tools.YoN('위 Response들이 자동적으로 삭제 됩니다. [y/n] > '):
-                return
+            if responses:
+                Response.showAll(responses)
+                if not Tools.YoN('위 Response들이 자동적으로 삭제 됩니다. [y/n] > '):
+                    return
 
-            Group.removeGroup(group_name)
-            print('Group이 삭제되었습니다')
+            if Tools.YoN('정말 ' + targetGroup.group_name + '그룹을 삭제하시겠습니까? [y/n]'):
+                Group.removeGroup(group_name)
+                print('Group이 삭제되었습니다')
+                return
 
 # 실제 db.sqlite3 파일에는 chatbot_User, chatbot_Mail 등과 같은 이름으로 테이블이 생성 된다.
 class User(models.Model):
@@ -143,7 +145,7 @@ class User(models.Model):
     mailCheck = models.BooleanField(default = False)
     combineIdList = models.CharField(max_length = 50, null = True, default = '[0]')
 
-    def showAll(group = None):
+    def showAll():
         print('======================USER========================')
         print('user_key\tuser_name\tgroup')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
@@ -213,6 +215,10 @@ class Log(models.Model):
 
     def __str__(self):
         return self.user.user_name + '(' + self.user.user_key + ')' + '|' + self.userMessage.replace('\n', '') + '|' + self.botMessage.replace('\n', '')
+
+    def write(user, userMessage, botMessage):
+        keywordList = Combine.convertKeywords(userMessage)
+        Log.objects.create(user = user, userMessage = userMessage, botMessage = botMessage, keywordList = keywordList)
 
 class Tools():
     def YoN(text):
@@ -595,13 +601,17 @@ class Response(models.Model):
             result += Combine.str(combineId)
         return result
 
-    def createResponse(combineIdList, responseType, msgOrFunc, group = None): # responseType은 'func', 'text' 둘중 하나
+    def createResponse(combineIdList, responseType, message, group = None): # responseType은 'func', 'text' 둘중 하나
         if type(combineIdList) != type(list()):
             print('combineIdList는 리스트타입이어야 합니다.')
             return False
 
+        if not message:
+            print('메시지가 정의되지 않았습니다')
+            return False
+
         try:
-            Response.objects.create(combineIdList = combineIdList, message = msgOrFunc, responseType = responseType, group = group)
+            Response.objects.create(combineIdList = combineIdList, message = message, responseType = responseType, group = group)
             return True
         except:
             print('이미 존재하는 combineIdList 입니다')
@@ -609,7 +619,6 @@ class Response(models.Model):
 
         print('올바르지 않은 responseType')
         return False
-
 
     def removeResponseById(id):
         try:
@@ -628,6 +637,10 @@ class Response(models.Model):
 
         if response.responseType == 'func':
             print('텍스트 응답만 수정할 수 있습니다')
+            return False
+
+        if not message:
+            print('메시지가 정의되지 않았습니다')
             return False
 
         response.message = message
@@ -711,14 +724,14 @@ class Response(models.Model):
 
                 if choice == '1':
                     message = str(Handler.elementsBuilder())
-                    Response.createResponse(combineIdList, 'text', message, group)
-                    print('생성되었습니다')
+                    if Response.createResponse(combineIdList, 'text', message, group):
+                        print('생성되었습니다')
                     return
 
                 elif choice == '2':
                     func = input('사용할 함수명을 입력하세요. > ')
-                    Response.createResponse(combineIdList, 'func', func, group)
-                    print('생성되었습니다')
+                    if Response.createResponse(combineIdList, 'func', func, group):
+                        print('생성되었습니다')
                     return
 
                 elif choice == 'exit()': return
@@ -758,26 +771,12 @@ class Response(models.Model):
                 return
 
             modMessage = Tools.listBuilder.build(response.message)
-            Response.modifyResponseById(responseId, modMessage)
-            print('수정되었습니다')
-
+            if Response.modifyResponseById(responseId, modMessage):
+                print('수정되었습니다')
 
 class manager():
-
-    def init():
-        # 초기에 여기서 init을 해주어야 inflate을 호출가능 하도록 해야 할 듯?
-        # init 했는지 안했는지는 관리자의 USER_KEY를 입력함에 따라..?
-        # Response의 combineIdList = [0]이 등록되어야 함
-
-        print('Keyword에 등록되지 않아 봇이 알아들을 수 없는 사용자의 질문에 대해 기본적으로 응답할 메시지를 등록해야 합니다\n')
-        print('다음 문자열 리스트 빌더에 등록되는 메시지에서 랜덤으로 사용자에게 응답합니다')
-        elements = Tools.listBuilder.build()
-        Response.createResponse([0], 'text', elements, group = None)
-        print('성공적으로 생성되었습니다.')
-
     def inflate():
-        if not Response.getResponsesWithCombineId([0]):
-            manager.init()
+        manager.init()
 
         while(True):
             print()
@@ -823,3 +822,20 @@ class manager():
             userMessage = input('[exit()]종료 > ')
             if userMessage == 'exit()': return
             print('응답 > ' + Response.getResponseText(user, userMessage))
+
+    def init():
+        # 초기에 여기서 init을 해주어야 inflate을 호출가능 하도록 해야 할 듯?
+        # init 했는지 안했는지는 관리자의 USER_KEY를 입력함에 따라..?
+        # Response의 combineIdList = [0]이 등록되어야 함
+
+        if Response.getResponsesWithCombineId([0]):
+            return
+
+        print('Keyword에 등록되지 않아 봇이 알아들을 수 없는 사용자의 질문에 대해 기본적으로 응답할 메시지를 등록해야 합니다\n')
+        print('다음 문자열 리스트 빌더에 등록되는 메시지에서 랜덤으로 사용자에게 응답합니다')
+        elements = Tools.listBuilder.build()
+        Response.createResponse([0], 'text', elements, group = None)
+        print('성공적으로 생성되었습니다.')
+
+        Group.createGroup('admin')
+
