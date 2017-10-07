@@ -812,7 +812,7 @@ class manager():
             elif c == '13': Group.manages.createGroup()
             elif c == '14': Group.manages.manageGroup()
             elif c == '15': Group.manages.removeGroup()
-            elif c == '20': menu.test()
+            elif c == '20': manager.test()
             elif c == 'exit()': return
             else: print('잘못된 입력입니다.')
 
