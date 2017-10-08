@@ -472,7 +472,10 @@ class Combine(models.Model):
             if list(combines).index(combine) > 0:
                 result += ', '
             result += combine.keyword.expression
-        return str(combineId) + ':' + result
+        if combineId == 0:
+            return '0:없음'
+        else:
+            return str(combineId) + ':' + result
 
     def showAll(combineIds = None):
     # combineId 리스트를 받고 해당 combineId를 가지는 
@@ -490,7 +493,7 @@ class Combine(models.Model):
             for combine in combines:
                 if list(combines).index(combine) > 0:
                     print(', ', end = '')
-                print(str(combine.keyword.expression), end = '')
+                print(combine.keyword.expression, end = '')
             print('')
         print('')
 
