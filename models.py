@@ -145,6 +145,7 @@ class User(models.Model):
     mailCheck = models.BooleanField(default = False)
     combineIdList = models.CharField(max_length = 50, null = True, default = '[0]')
     messageList = models.TextField(default = '[]')
+    doNextKeywordCheck = models.BooleanField(default = True)
 
     def showAll():
         print('======================USER========================')
@@ -152,6 +153,10 @@ class User(models.Model):
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
         for user in User.objects.all():
             print(user.user_key + '\t' + str(user.user_name) + '\t\t' + str(user.group))
+
+    def setDoNextKeywordCheck(self, TrueOrFalse):
+        self.DoNextkeywordCheck = TrueOrFalse
+        self.save()
 
     def getByGroup(group_name):
         try:
@@ -454,7 +459,7 @@ class Keyword(models.Model):
 
 class Combine(models.Model):
     combineId = models.IntegerField(null = True)
-    keyword = models.ForeignKey(Keyword)
+    keyword = models.ForeignKey(Keyword, null = False, default = None)
 
     def __str__(self):
         return str(self.combineId) + ' | ' + str(self.keyword)
@@ -485,7 +490,7 @@ class Combine(models.Model):
             for combine in combines:
                 if list(combines).index(combine) > 0:
                     print(', ', end = '')
-                print(combine.keyword.expression, end = '')
+                print(str(combine.keyword.expression), end = '')
             print('')
         print('')
 
@@ -498,6 +503,7 @@ class Combine(models.Model):
         else:
             print('생성 실패. 중복된 Keyword 조합입니다.')
             return False
+
 
     def removeCombine(combineId):
         if Response.getResponsesWithCombineId(combineId):
@@ -577,7 +583,7 @@ class Combine(models.Model):
             Combine.showAll()
             combineIds = list()
             while(True):
-                combineId = input('Combine 조합으로 생성할 combineId를 선택하세요[0]없음 [exit()] 종료 > ')
+                combineId = input('Combine 조합으로 생성할 combineId를 선택하세요[0]없음 [exit()]종료 > ')
 
                 if combineId == 'exit()':
                     if combineIds: return combineIds
@@ -606,6 +612,14 @@ class Response(models.Model):
         elif self.responseType == 'func': message = '[함수]' + self.func
 
         return str(self.combineIdList) + '|' + message
+
+    def existsNextCombineId(self, combineId): # 현재 response의 다음 해당 combineId가 존재하는지
+        targetList = eval(self.combineIdList)
+        targetList.append(combineId)
+        try:
+            return Response.objects.get(combineIdList = targetList)
+        except:
+            return None
 
     def showAll(responses = None):
         if not responses:
@@ -700,23 +714,41 @@ class Response(models.Model):
         return resultResponses
 
     def getResponse(user, combineIdList):
+        # combineIdList에서 [0]이 단독으로 있는 것을 제외하고
+        # 두번째 index 이후로 [0]이 포함된 경우를 찾아야 함.
+        # 만약에 combineIdList + 0 이 존재하다면, combineIdList의 다음 응답은 반드시 0으로 인식되어야 함
+
         for response in Response.objects.filter(group = user.group):
             if combineIdList == eval(response.combineIdList):
+                if response.existsNextCombineId(0):
+                    user.setDoNextKeywordCheck(False)
                 return response
 
         for response in Response.objects.filter(group = None):
             if combineIdList == eval(response.combineIdList):
+                if response.existNextCombineId(0):
+                    user.setDoNextKeywordCheck(False)
                 return response
 
         return None
 
     def getResponseText(user, userMessage):
-        keywordList = Combine.convertKeywords(userMessage)
-        combineIdFromKeywordList = Combine.getCombineIdByKeywordList(keywordList)
+        # 만약 user.keywordCheck가 True이면 정상적으로 진행
+        # False이면, userMessage를 convert할 필요도 없고 그것을 getCombineId 할 필요도 없음
+        # User 입장에서 combineIdList는 뭐라고 입력하지 -> 그냥0을 추가할까 -> 나쁘지 않은 듯?
+        # 즉, False이면 combineIdList에다가는 0을 추가하는 것임
 
-        # user의 combineIdList에 keywordList의 CombineId를 추가해야함.
-        combineIdList = eval(user.combineIdList)
-        combineIdList.append(combineIdFromKeywordList)
+        if user.doNextKeywordCheck:
+            keywordList = Combine.convertKeywords(userMessage)
+            combineIdFromKeywordList = Combine.getCombineIdByKeywordList(keywordList)
+
+            # user의 combineIdList에 keywordList의 CombineId를 추가해야함.
+            combineIdList = eval(user.combineIdList)
+            combineIdList.append(combineIdFromKeywordList)
+        else:
+            user.setDoNextKeywordCheck(True)
+            combineIdList = eval(user.combineIdList)
+            combineIdList.append(0)
 
         response = Response.getResponse(user, combineIdList) # user의 combineIdList에 새로 keywordList에서 찾은 combineId를 추가한 리스트로 탐색
         if response:
@@ -730,8 +762,10 @@ class Response(models.Model):
         user.setMessageList([userMessage])
 
         response = Response.getResponse(user, [combineIdFromKeywordList]) # user의 combineIdList를 업데이트 하고 keywordList에서 찾은 combineId로만 탐색
-        if response: return Response.getMessage(user, response)
-        else: return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
+        if response:
+            return Response.getMessage(user, response)
+        else:
+            return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
 
     def getMessage(user, response):
         if response.responseType == 'text':
@@ -878,11 +912,14 @@ class manager():
         if Response.getResponsesWithCombineId([0]):
             return
 
+        #Combine.createCombine(combineId = combineId, keyword = None)
+        #print('Combine(combineId=0)이 생성되었습니다')
+
         print('Keyword에 등록되지 않아 봇이 알아들을 수 없는 사용자의 질문에 대해 기본적으로 응답할 메시지를 등록해야 합니다\n')
         print('다음 문자열 리스트 빌더에 등록되는 메시지에서 랜덤으로 사용자에게 응답합니다')
         elements = Tools.listBuilder.build()
         Response.createResponse([0], 'text', elements, group = None)
-        print('성공적으로 생성되었습니다.')
+        print('Response(combineIdList=[0])이 생성되었습니다')
 
         Group.createGroup('admin')
 
