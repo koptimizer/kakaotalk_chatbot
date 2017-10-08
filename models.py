@@ -153,6 +153,12 @@ class User(models.Model):
         for user in User.objects.all():
             print(user.user_key + '\t' + str(user.user_name) + '\t\t' + str(user.group))
 
+    def getByGroup(group_name):
+        try:
+            group = Group.objects.get(group_name = group_name)
+            return User.objects.get(group = group)
+        except: return None
+
     def getOrNoneByName(user_name):
         try: return User.objects.get(user_name = user_name)
         except: return None
