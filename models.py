@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils import timezone
-
+#from . import funcMod
 from main import funcMod
-
+#import main.funcMod
 import datetime
 import re
 import random
@@ -222,7 +222,7 @@ class Mail(models.Model):
     dateTime = models.DateTimeField(auto_now_add = True)
 
     def __str__(self):
-        return self.sender.user_name + '|' + self.message
+        return str(self.sender.user_name) + '|' + self.message
 
     def getNumOfMails(user):
         return len(Mail.objects.filter(receiver = user))
@@ -250,7 +250,7 @@ class Mail(models.Model):
         return botMessage
 
     def sendMail(sender, receiver, message):
-        Mail.objects.create(sender = sender, receiver = receiver, message = meessage)
+        Mail.objects.create(sender = sender, receiver = receiver, message = message)
 
 class Log(models.Model):
     user = models.ForeignKey(User, on_delete = models.CASCADE)
@@ -607,7 +607,7 @@ class Response(models.Model):
     combineIdList = models.CharField(max_length = 50, null = False, default = [0])
     group = models.ForeignKey(Group, on_delete = models.CASCADE, null = True)
     responseType = models.CharField(max_length = 10, null = False, default = 'text') # text or func
-    message = models.TextField(default = None)
+    message = models.TextField(default = None, null = True)
     func = models.CharField(max_length = 30, null = True, default = None)
 
     def __str__(self):
@@ -658,17 +658,23 @@ class Response(models.Model):
             result += Combine.str(combineId)
         return result
 
-    def createResponse(combineIdList, responseType, message, group = None): # responseType은 'func', 'text' 둘중 하나
+    def createResponse(combineIdList, responseType, msgOrFunc, group = None): # responseType은 'func', 'text' 둘중 하나
         if type(combineIdList) != type(list()):
             print('combineIdList는 리스트타입이어야 합니다.')
             return False
 
-        if not message:
-            print('메시지가 정의되지 않았습니다')
+        if not msgOrFunc:
+            if responseType == 'text':
+                print('메시지가 정의되지 않았습니다')
+            elif responseType == 'func':
+                print('함수가 정의되지 않았습니다')
             return False
 
         try:
-            Response.objects.create(combineIdList = combineIdList, message = message, responseType = responseType, group = group)
+            if responseType == 'text':
+                Response.objects.create(combineIdList = combineIdList, message = str(msgOrFunc), responseType = responseType, group = group)
+            elif responseType == 'func':
+                Response.objects.create(combineIdList = combineIdList, func = msgOrFunc, responseType = responseType, group = group)
             return True
         except:
             print('이미 존재하는 combineIdList 입니다')
@@ -807,7 +813,7 @@ class Response(models.Model):
                 choice = input('응답형식을 선택하세요 : [1]텍스트 [2]함수 [exit()]종료 > ')
 
                 if choice == '1':
-                    message = str(Tools.listBuilder.build())
+                    message = Tools.listBuilder.build()
                     if Response.createResponse(combineIdList, 'text', message, group):
                         print('생성되었습니다')
                     return
