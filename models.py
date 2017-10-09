@@ -16,15 +16,19 @@ class Group(models.Model):
         Group.objects.create(group_name = group_name)
 
     def get(group_name):
-        try: return Group.objects.get(group_name = group_name)
-        except: return None
+        try:
+            return Group.objects.get(group_name = group_name)
+        except:
+            return None
 
     def showAll(targetGroup = None):
         print('======================GROUP=======================')
         print('group_name\tuser_name')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-        if targetGroup: groups = [targetGroup]
-        else: groups = Group.objects.all()
+        if targetGroup:
+            groups = [targetGroup]
+        else:
+            groups = Group.objects.all()
 
         for group in groups:
             print(group.group_name, end = '\t\t')
@@ -36,7 +40,8 @@ class Group(models.Model):
             print()
 
     def removeGroup(group_name):
-        try: group = Group.objects.get(group_name = group_name)
+        try:
+            group = Group.objects.get(group_name = group_name)
         except:
             print('존재하지 않는 Group 입니다')
             return
@@ -54,7 +59,8 @@ class Group(models.Model):
                 choice = input('\n[1]Group명 변경 [2]Group멤버 추가 [3]Group멤버 삭제 [exit()]종료 > ')
                 if choice == '1':
                     group = Group.manages.selectGroup()
-                    if not group: continue
+                    if not group:
+                        continue
 
                     print('변경전>' + group.group_name)
                     modGroupName = input('변경후>')
@@ -65,10 +71,12 @@ class Group(models.Model):
 
                 elif choice == '2':
                     group = Group.manages.selectGroup()
-                    if not group: continue
+                    if not group:
+                            continue
 
                     user = User.manages.selectUser()
-                    if not user: continue
+                    if not user:
+                        continue
 
                     if user.group == group:
                         print('이미 해당 Group 소속입니다')
@@ -79,14 +87,17 @@ class Group(models.Model):
                 elif choice == '3':
                     Group.showAll()
                     user = User.manages.selectUser()
-                    if not user: continue
+                    if not user:
+                        continue
 
                     user.setGroup(None)
                     print('삭제되었습니다')
 
-                elif choice == 'exit()': return
+                elif choice == 'exit()':
+                    return
 
-                else: continue
+                else:
+                    continue
 
         def selectGroup():
             Group.showAll()
@@ -162,11 +173,13 @@ class User(models.Model):
         try:
             group = Group.objects.get(group_name = group_name)
             return User.objects.get(group = group)
-        except: return None
+        except:
+            return None
 
     def getOrNoneByName(user_name):
         try: return User.objects.get(user_name = user_name)
-        except: return None
+        except:
+            return None
 
     def setGroup(self, group):
         self.group = group
@@ -184,7 +197,8 @@ class User(models.Model):
         self.save()
 
     def getOrCreate(user_key):
-        try: return User.objects.get(user_key = user_key)
+        try:
+            return User.objects.get(user_key = user_key)
         except:
             User.objects.create(user_key = user_key)
             return User.objects.get(user_key = user_key)
@@ -270,22 +284,31 @@ class Tools():
     def YoN(text):
         while(True):
             yon = input(text)
-            if yon == 'y': return True
-            elif yon == 'n': return False
-            else: continue
+            if yon == 'y':
+                return True
+            elif yon == 'n':
+                return False
+            else:
+                continue
 
     class listBuilder():
         def build(elements = None):
-            if type(elements) == type(str()): elements = eval(elements)
-            if not elements: elements = list()
+            if type(elements) == type(str()):
+                elements = eval(elements)
+            if not elements:
+                elements = list()
 
             while(True):
                 print(str(elements))
                 choice = input('[1]추가 [2]수정 [3]삭제 [exit()]완료 > ')
-                if choice == '1': Tools.listBuilder.create(elements)
-                elif choice == '2': Tools.listBuilder.modify(elements)
-                elif choice == '3': Tools.listBuilder.remove(elements)
-                elif choice == 'exit()': return elements
+                if choice == '1':
+                    Tools.listBuilder.create(elements)
+                elif choice == '2':
+                    Tools.listBuilder.modify(elements)
+                elif choice == '3':
+                    Tools.listBuilder.remove(elements)
+                elif choice == 'exit()':
+                    return elements
 
         def create(elements):
             Tools.listBuilder.show(elements)
@@ -295,7 +318,8 @@ class Tools():
         def remove(elements):
             Tools.listBuilder.show(elements)
             index = input('삭제할 문자열의 번호를 입력하세요 > ')
-            if index == 'exit()': return
+            if index == 'exit()':
+                return
 
             try: index = int(index)
             except:
@@ -314,9 +338,11 @@ class Tools():
         def modify(elements):
             Tools.listBuilder.show(elements)
             index = input('수정할 문자열의 번호를 입력하세요 > ')
-            if index == 'exit()': return
+            if index == 'exit()':
+                return
 
-            try: index = int(index)
+            try:
+                index = int(index)
             except:
                 print('정수만 입력이 가능합니다')
                 return
@@ -326,7 +352,8 @@ class Tools():
                 if Tools.YoN('수정할까요? [y/n] > '):
                     elements[index] = updateElement
                 else: print('취소하였습니다.')
-            else: print('존재하지 않는 문자열 번호입니다')
+            else:
+                print('존재하지 않는 문자열 번호입니다')
             print()
 
         def show(elements):
@@ -388,7 +415,8 @@ class Keyword(models.Model):
         def createKeyword():
             Keyword.showAll()
             expression = input('생성할 Keyword의 expression을 입력하세요 > ')
-            if expression == 'exit()': return
+            if expression == 'exit()':
+                return
 
             if Keyword.getKeywordOrNone(expression):
                 print('이미 존재하는 Keyword입니다')
@@ -405,7 +433,8 @@ class Keyword(models.Model):
         def removeKeyword():
             Keyword.showAll()
             expression = input('삭제할 Keyword의 expression을 입력하세요 > ')
-            if expression == 'exit()': return
+            if expression == 'exit()':
+                return
 
             try:
                 target = Keyword.objects.get(expression = expression)
@@ -416,12 +445,14 @@ class Keyword(models.Model):
             combineIds = Combine.getDistinctCombineIds(target)
             if combineIds:
                 Combine.showAll(combineIds)
-                if not Tools.YoN('[경고] 위 Combine 데이터가 삭제될 것입니다. [y/n] > '): return
+                if not Tools.YoN('[경고] 위 Combine 데이터가 삭제될 것입니다. [y/n] > '):
+                    return
 
             responses = Response.getResponsesWithCombineId(combineIds)
             if responses:
                 Response.showAll(responses)
-                if not Tools.YoN('[경고] 위 Response 데이터가 삭제될 것입니다. [y/n] > '): return
+                if not Tools.YoN('[경고] 위 Response 데이터가 삭제될 것입니다. [y/n] > '):
+                    return
 
             if not (responses or combineIds):
                 if Tools.YoN('정말로 삭제하시겠습니까? [y/n] > '):
@@ -432,9 +463,11 @@ class Keyword(models.Model):
         def modifyKeyword():
             Keyword.showAll()
             expression = input('element를 수정할 Keyword의 expression을 입력하세요. [exit()] 종료 > ')
-            if expression == 'exit()': return
+            if expression == 'exit()':
+                return
 
-            try: keyword = Keyword.objects.get(expression = expression)
+            try:
+                keyword = Keyword.objects.get(expression = expression)
             except:
                 print('존재하지 않는 Keyword 입니다.')
                 return
@@ -449,11 +482,15 @@ class Keyword(models.Model):
                 expression = input('Keyword 조합을 생성합니다. 선택할 expression을 입력하세요. [exit()] 완료 > ')
                 try:
                     item = Keyword.objects.get(expression = expression)
-                    if item in keywords: print('이미 입력된 Keyword 입니다.')
-                    else: keywords.append(item)
+                    if item in keywords:
+                        print('이미 입력된 Keyword 입니다.')
+                    else:
+                        keywords.append(item)
                 except:
-                    if expression == 'exit()': return keywords
-                    else: print('해당하는 expression이 존재하지 않음')
+                    if expression == 'exit()':
+                        return keywords
+                    else:
+                        print('해당하는 expression이 존재하지 않음')
 
                 print(str(keywords))
 
@@ -483,7 +520,8 @@ class Combine(models.Model):
         print('combineId\texpression')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
 
-        if not combineIds: combineIds = Combine.getDistinctCombineIds()
+        if not combineIds:
+            combineIds = Combine.getDistinctCombineIds()
 
         for combineId in combineIds:
             if not Response.getResponsesWithCombineId(combineId):
@@ -544,7 +582,8 @@ class Combine(models.Model):
                 else:
                     duplicated = False
                     break
-            if duplicated: return combineId
+            if duplicated:
+                return combineId
         return 0
 
     def genCombineId():
@@ -571,9 +610,11 @@ class Combine(models.Model):
         def removeCombine():
             Combine.showAll()
             combineId = input('제거할 Combine의 combineId를 입력하세요. [exit()] 종료 > ')
-            if combineId == 'exit()': return
+            if combineId == 'exit()':
+                return
 
-            try: combineId = int(combineId)
+            try:
+                combineId = int(combineId)
             except:
                 print('정수를 입력하세요')
                 return
@@ -589,17 +630,21 @@ class Combine(models.Model):
                 combineId = input('Combine 조합으로 생성할 combineId를 선택하세요[0]없음 [exit()]종료 > ')
 
                 if combineId == 'exit()':
-                    if combineIds: return combineIds
-                    else: return None
+                    if combineIds:
+                        return combineIds
+                    else:
+                        return None
 
-                try: combineId = int(combineId)
+                try:
+                    combineId = int(combineId)
                 except:
                     print('정수를 입력하세요.')
                     continue
 
                 if Combine.objects.filter(combineId = combineId) or combineId == 0:
                     combineIds.append(combineId)
-                else: print('존재하지 않는 combineId 입니다')
+                else:
+                    print('존재하지 않는 combineId 입니다')
 
                 print(str(combineIds))
 
@@ -611,8 +656,10 @@ class Response(models.Model):
     func = models.CharField(max_length = 30, null = True, default = None)
 
     def __str__(self):
-        if self.responseType == 'text': message = self.message
-        elif self.responseType == 'func': message = '[함수]' + self.func
+        if self.responseType == 'text':
+            message = self.message
+        elif self.responseType == 'func':
+            message = '[함수]' + self.func
 
         return str(self.combineIdList) + '|' + message
 
@@ -712,7 +759,8 @@ class Response(models.Model):
     def getResponsesWithCombineId(combineIds):
         # 해당 combineId를 가지는 Response가 있으면 해당 Response 객체 리스트를 리턴.
 
-        if type(combineIds) == type(int()): combineIds = [combineIds]
+        if type(combineIds) == type(int()):
+            combineIds = [combineIds]
 
         resultResponses = list()
         for response in Response.objects.all().order_by('combineIdList'):
@@ -824,13 +872,15 @@ class Response(models.Model):
                         print('생성되었습니다')
                     return
 
-                elif choice == 'exit()': return
+                elif choice == 'exit()':
+                    return
                 else: print('잘못된 입력입니다')
 
         def removeResponse():
             Response.showAll()
             responseId = input('삭제할 Response의 id를 입력하세요 [exit()]종료 > ')
-            if responseId == 'exit()': return
+            if responseId == 'exit()':
+                return
 
             try: responseId = int(responseId)
             except: print('정수를 입력하세요.')
@@ -887,30 +937,49 @@ class manager():
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
             print()
 
-            if c == '1': Keyword.showAll()
-            elif c == '2': Keyword.manages.createKeyword()
-            elif c == '3': Keyword.manages.modifyKeyword()
-            elif c == '4': Keyword.manages.removeKeyword()
-            elif c == '5': Combine.showAll()
-            elif c == '6': Combine.manages.createCombine()
-            elif c == '7': Combine.manages.removeCombine()
-            elif c == '8': Response.showAll()
-            elif c == '9': Response.manages.createResponse()
-            elif c == '10': Response.manages.modifyResponse()
-            elif c == '11': Response.manages.removeResponse()
-            elif c == '12': Group.showAll()
-            elif c == '13': Group.manages.createGroup()
-            elif c == '14': Group.manages.manageGroup()
-            elif c == '15': Group.manages.removeGroup()
-            elif c == '20': manager.test()
-            elif c == 'exit()': return
-            else: print('잘못된 입력입니다.')
+            if c == '1':
+                Keyword.showAll()
+            elif c == '2':
+                Keyword.manages.createKeyword()
+            elif c == '3':
+                Keyword.manages.modifyKeyword()
+            elif c == '4':
+                Keyword.manages.removeKeyword()
+            elif c == '5':
+                Combine.showAll()
+            elif c == '6':
+                Combine.manages.createCombine()
+            elif c == '7':
+                Combine.manages.removeCombine()
+            elif c == '8':
+                Response.showAll()
+            elif c == '9':
+                Response.manages.createResponse()
+            elif c == '10':
+                Response.manages.modifyResponse()
+            elif c == '11':
+                Response.manages.removeResponse()
+            elif c == '12':
+                Group.showAll()
+            elif c == '13':
+                Group.manages.createGroup()
+            elif c == '14':
+                Group.manages.manageGroup()
+            elif c == '15':
+                Group.manages.removeGroup()
+            elif c == '20':
+                manager.test()
+            elif c == 'exit()':
+                return
+            else:
+                print('잘못된 입력입니다.')
 
     def test():
         user = User.getOrCreate(user_key = 'testuser')
         while(True):
             userMessage = input('[exit()]종료 > ')
-            if userMessage == 'exit()': return
+            if userMessage == 'exit()':
+                return
             print('응답 > ' + Response.getResponseText(user, userMessage))
 
     def init():
