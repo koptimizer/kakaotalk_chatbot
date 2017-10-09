@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils import timezone
-#from . import funcMod
-from main import funcMod
-#import main.funcMod
+from . import funcMod
 import datetime
 import re
 import random
