@@ -3,7 +3,7 @@ import importlib
 # 각종 함수를 매핑시키기 위한 함수
 def getFuncMessage(user, response):
 
-    if response.func == 'mail':
+    if response.func == 'sendMail':
         User = getattr(importlib.import_module('main.models'), 'User')
         Mail = getattr(importlib.import_module('main.models'), 'Mail')
 
@@ -13,3 +13,7 @@ def getFuncMessage(user, response):
         Mail.sendMail(user, admin, userMessage)
         botMessage = '\'' + userMessage + '\'\n메시지가 전달되었습니다!'
         return botMessage
+    elif response.func == 'readMail':
+        # admin만 호출 가능
+        Mail = getattr(importlib.import_module('main.models'), 'Mail')
+        return Mail.readMail(user)

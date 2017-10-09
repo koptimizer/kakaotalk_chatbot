@@ -243,8 +243,8 @@ class Mail(models.Model):
         if Mail.getNumOfMails(user) == 0:
             return '메일함이 비었어요~*'
 
-        mail = Mail.objects.filter(receiver = user).order_by('-datetime')[0]
-        date = datetime.strptime(str(mail.datetime), '%Y-%m-%d %H:%M:%S.%f')
+        mail = Mail.objects.filter(receiver = user).order_by('-dateTime')[0]
+        date = datetime.datetime.strptime(str(mail.dateTime), '%Y-%m-%d %H:%M:%S.%f')
 
         week = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
 
@@ -255,7 +255,7 @@ class Mail(models.Model):
         elif date.hour > 12:
             hour = '오후 ' + str(date.hour - 12)
 
-        botMessage = str(date.year) + '년 ' + str(date.month) + '월 ' + str(date.day) + '일 ' + week[date.weekday()] + '\n' + hour + '시 ' + str(date.minute) + '분\n' + '발신자 : '  + mail.sender.user_name + '\n\n' + mail.message
+        botMessage = str(date.year) + '년 ' + str(date.month) + '월 ' + str(date.day) + '일 ' + week[date.weekday()] + '\n' + hour + '시 ' + str(date.minute) + '분\n' + '발신자 : '  + str(mail.sender.user_name) + '\n\n' + mail.message
 
         mail.delete()
 
@@ -736,23 +736,23 @@ class Response(models.Model):
             print('올바르지 않은 Response id')
             return False
 
-    def modifyResponseById(id, message):
+    def modifyResponseById(id, messageOrFunc):
         try:
             response = Response.objects.get(id = id)
         except:
             print('올바르지 않은 Response id')
             return False
 
+        if not messageOrFunc:
+            print('메시지 혹은 함수명이 정의되지 않았습니다')
+            return False
+
         if response.responseType == 'func':
-            print('텍스트 응답만 수정할 수 있습니다')
-            return False
-
-        if not message:
-            print('메시지가 정의되지 않았습니다')
-            return False
-
-        response.message = message
+            response.func = messageOrFunc
+        elif response.responseType == 'text':
+            response.message = messageOrFunc
         response.save()
+        return True
 
     def getResponsesWithCombineId(combineIds):
         # 해당 combineId를 가지는 Response가 있으면 해당 Response 객체 리스트를 리턴.
@@ -905,11 +905,11 @@ class Response(models.Model):
                 return
 
             if response.responseType == 'func':
-                print('텍스트 응답만 수정할 수 있습니다')
-                return
+                messageOrFunc = input('변경할 함수명을 입력하세요 > ')
+            elif response.responseType == 'text':
+                messageOrFunc = Tools.listBuilder.build(response.message)
 
-            modMessage = Tools.listBuilder.build(response.message)
-            if Response.modifyResponseById(responseId, modMessage):
+            if Response.modifyResponseById(responseId, messageOrFunc):
                 print('수정되었습니다')
 
 class manager():
