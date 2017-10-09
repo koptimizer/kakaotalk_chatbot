@@ -25,6 +25,7 @@ def message(request):
 
     botMessageDumped = json.dumps({'message' : {'text' : botMessage}})
 
+
     return HttpResponse(botMessageDumped)
 
 def keyboard(request):
