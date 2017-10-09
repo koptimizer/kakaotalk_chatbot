@@ -735,7 +735,7 @@ class Response(models.Model):
 
         for response in Response.objects.filter(group = None):
             if combineIdList == eval(response.combineIdList):
-                if response.existNextCombineId(0):
+                if response.existsNextCombineId(0):
                     user.setDoNextKeywordCheck(False)
                 return response
 
