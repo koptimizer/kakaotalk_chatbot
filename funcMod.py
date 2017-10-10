@@ -4,6 +4,7 @@ from . import keys
 from . import busMod
 from . import metroMod # 이거때문에 시간표가 꼬임..
 from . import shuttleMod
+from . import sunfoodMod
 
 import urllib.request
 import urllib.parse
@@ -25,8 +26,7 @@ def getFuncMessage(user, response):
         botMessage = '\'' + userMessage + '\'\n메시지가 전달되었습니다!'
         return botMessage
 
-    elif response.func == 'readMail':
-        # admin만 호출 가능
+    elif response.func == 'readMail': # admin만 호출 가능
         Mail = getattr(importlib.import_module('main.models'), 'Mail')
         return Mail.readMail(user)
 
@@ -65,4 +65,12 @@ def getFuncMessage(user, response):
         elif userMessage == '오이도셔틀':
             return shuttleMod.buildText('OidoToUniv')
         else:
-            return '\'정왕셔틀\',\n\'학교셔틀\',\n\'오이도셔틀\'\n이라고 물어보세요!'
+            return '셔틀 도착시간을 알고싶으시다면..\n\'정왕셔틀\',\n\'학교셔틀\',\n\'오이도셔틀\'\n이라고 물어보세요!'
+
+    elif response.func == 'sunfood':
+        menuDict = sunfoodMod.getMenuDict()
+        botMessage = '오늘 선푸드 메뉴를 알려드릴께요!'
+        botMessage += '\n\n' + '[조식]' + menuDict['breakfast']
+        botMessage += '\n\n' + '[중식]' + menuDict['lunch']
+        botMessage += '\n\n' + '[석식]' + menuDict['dinner']
+        return botMessage

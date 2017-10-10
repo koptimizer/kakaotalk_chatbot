@@ -4,6 +4,7 @@ Python-Django 를 기반으로한 카카오톡 채팅봇 프레임워크 프로�
 
 * 앱 이름은 main 입니다.(python manage.py startapp main)
 * models.py에 정의된 대화식 인터페이스(from main.models import manager -> manager.inflate())를 통해 키워드 및 응답을 관리할 수 있습니다.
+* sunfoodMod.py : 한국산업기술대학교 학식메뉴를 크롤링하는 코드입니다. requests, bs4 모듈을 필요로 합니다.
 
 1. 정규표현식을 통해서 사용자의 메시지를 일반화합니다. 이것은 Keyword 테이블에서 관리됩니다.<br>
 ex) '^뭐[해(하니)]\??$' -> '뭐해'<br>
