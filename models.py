@@ -269,14 +269,15 @@ class Log(models.Model):
     userMessage = models.TextField(null = True)
     botMessage = models.TextField(null = True)
     dateTime = models.DateTimeField(auto_now_add = True)
+    delay = models.FloatField(null = True)
     keywordList = models.CharField(max_length = 100, null = True)
 
     def __str__(self):
         return self.user.user_name + '(' + self.user.user_key + ')' + '|' + self.userMessage.replace('\n', '') + '|' + self.botMessage.replace('\n', '')
 
-    def write(user, userMessage, botMessage):
+    def write(user, userMessage, botMessage, delay = None):
         keywordList = Combine.convertKeywords(userMessage)
-        Log.objects.create(user = user, userMessage = userMessage, botMessage = botMessage, keywordList = keywordList)
+        Log.objects.create(user = user, userMessage = userMessage, botMessage = botMessage, keywordList = keywordList, delay = delay)
 
 class Tools():
     def YoN(text):
@@ -978,7 +979,10 @@ class manager():
             userMessage = input('[exit()]종료 > ')
             if userMessage == 'exit()':
                 return
-            print('응답 > ' + Response.getResponseText(user, userMessage))
+            start = datetime.datetime.now()
+            print('응답 > ' + Response.getResponseText(user, userMessage), end = ' ')
+            timeDiff = datetime.datetime.now() - start
+            print(str(timeDiff.total_seconds()) + 's')
 
     def init():
         # 초기에 여기서 init을 해주어야 inflate을 호출가능 하도록 해야 할 듯?

@@ -18,7 +18,12 @@ def getBusText():
     resultText = '[정왕역환승센터 정류장 실시간 안내]'
     resultText += '\n======================\n'
 
-    routeId = {'224000020' : '26', '224000027' : '26-1', '224000011' : '20-1', '224000007' : '25', '224000021' : '28', '224000048' : '28-1', '224000022' : '29', '224000049' : '29-1', '224000012' : '30', '224000033' : '7', '224000036' : '11-A'}
+    routeId = {'224000020' : '26', '224000027' : '26-1',
+            '224000011' : '20-1', '224000007' : '25',
+            '224000021' : '28', '224000048' : '28-1',
+            '224000022' : '29', '224000049' : '29-1',
+            '224000012' : '30', '224000033' : '7',
+            '224000036' : '11-A'}
 
     for item in resultList:
         resultText += routeId[item['routeId']] + '번 버스'
@@ -50,30 +55,21 @@ def getBusArrivalList(stationId, key):
     result = fp.read()
     fp.close()
 
+    print(result.decode('UTF-8'))
     root = ElementTree.fromstring(result.decode('UTF-8'))
-    #print(root.find('msgBody').find('busArrivalList').find('routeId').text)
+    if root.find('msgHeader').find('resultCode').text == '4':
+        return []
 
     busArrivalList = root.find('msgBody').findall('busArrivalList')
 
     resultList = list()
     for item in busArrivalList:
-        #predictTime1 = item.find('predictTime1')
-        #predictTime2 = item.find('predictTime2')
-
-        #print(predictTime1.text)
-        #print(predictTime2.text)
-
         itemDict = {
                     'routeId' : item.find('routeId').text,
                     'predictTime1' : item.find('predictTime1').text,
                     'predictTime2' : item.find('predictTime2').text
                    }
 
-        #itemList = [item.find('predictTime1').text, item.find('predictTime2').text]
-
-        #print(item.find('routeId').text)
-        #resultDict[item.find('routeId').text] = itemDict
-        #resultDict[item.find('routeId').text] = itemDict
         resultList.append(itemDict)
 
     print('getBusArrivalList 종료')

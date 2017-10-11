@@ -7,6 +7,7 @@ from main.models import Response
 from main.models import Log
 
 import json
+import datetime
 
 @csrf_exempt
 def message(request):
@@ -19,12 +20,13 @@ def message(request):
 
     user = User.getOrCreate(user_key)
 
+    start = datetime.datetime.now()
     botMessage = Response.getResponseText(user, userMessage)
+    timeDiff = datetime.datetime.now() - start
 
-    Log.write(user, userMessage, botMessage)
+    Log.write(user, userMessage, botMessage, timeDiff.total_seconds())
 
     botMessageDumped = json.dumps({'message' : {'text' : botMessage}})
-
 
     return HttpResponse(botMessageDumped)
 
