@@ -4,19 +4,12 @@ from . import keys
 
 #routeId = {'26' : '224000020', '26-1' : '224000027', '20-1' : '224000011', '25' : '224000007', '28' : '224000021', '28-1' : '224000048', '29' : '224000022', '29-1' : '224000049', '30' : '224000012', '7' : '224000033', '11-A' : '224000036'}
 
-
-#url = 'http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=' + key + '&stationId=' + stationId['정왕역환승센터'] # 버스도착정보항목조회 URL
-
-#url = 'http://openapi.gbis.go.kr/ws/rest/busarrivalservice/station?serviceKey=' + key + '&stationId=' + stationId['정왕역환승센터'] # 버스도착정보항목조회 URL
-
-#print(result.decode('UTF-8'))
-
 def getBusText():
     stationId = {'정왕역' : '224000023', '정왕역환승센터' : '224000837'}
     resultList = getBusArrivalList(stationId['정왕역환승센터'], keys.data_go_kr)
 
-    resultText = '[정왕역환승센터 정류장 실시간 안내]'
-    resultText += '\n======================\n'
+    resultText = '[정왕역환승센터 정류장 실시간 안내]\n'
+    #resultText += '\n======================\n'
 
     routeId = {'224000020' : '26', '224000027' : '26-1',
             '224000011' : '20-1', '224000007' : '25',
@@ -36,7 +29,7 @@ def getBusText():
 
         resultText += '\n'
 
-    resultText += '======================'
+    #resultText += '======================'
 
     return resultText
 

@@ -8,7 +8,8 @@ import random
 class Group(models.Model):
     group_name = models.CharField(max_length = 30, null = False, unique = True)
 
-    def __str__(self): return self.group_name
+    def __str__(self):
+        return self.group_name
 
     def createGroup(group_name):
         Group.objects.create(group_name = group_name)
@@ -272,12 +273,32 @@ class Log(models.Model):
     delay = models.FloatField(null = True)
     keywordList = models.CharField(max_length = 100, null = True)
 
+    def showAllByKeyword(keywordList):
+        # keywordList에 해당하는 Log의 목록을 보여줌
+        print('=======================LOG========================')
+        print('user_key\tuserMessage\t')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+        for log in Log.objects.filter(keywordList = keywordList):
+            print(log.user.user_key + '\t' + log.userMessage)
+
+    def showAllByDelay():
+        # Response 중에서 delay가 긴 명령어를 찾아낸다
+        print('=======================LOG========================')
+        print('user_key\tuserMessage\t')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+
     def __str__(self):
         return self.user.user_name + '(' + self.user.user_key + ')' + '|' + self.userMessage.replace('\n', '') + '|' + self.botMessage.replace('\n', '')
 
     def write(user, userMessage, botMessage, delay = None):
         keywordList = Combine.convertKeywords(userMessage)
         Log.objects.create(user = user, userMessage = userMessage, botMessage = botMessage, keywordList = keywordList, delay = delay)
+
+    class manages():
+        def showAll():
+            print('Log를 검색할 keywordList를 입력해 주세요')
+            targetList = Tools.listBuilder.build()
+            Log.showAll(targetList)
 
 class Tools():
     def YoN(text):
@@ -932,6 +953,9 @@ class manager():
             print('[12] Group 목록 확인\t[14] Group 관리')
             print('[13] Group 생성\t\t[15] Group 삭제')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+            print('[16] Keyword가 인식되지 않는 Log 목록 확인')
+            print('[17] delay가 긴 명령어 확인하기')
+            print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[20] 직접 대화해보면서 테스트하기\n')
             c = input('명령번호를 입력하세요. [exit()] 종료 > ')
             print()
@@ -966,6 +990,10 @@ class manager():
                 Group.manages.manageGroup()
             elif c == '15':
                 Group.manages.removeGroup()
+            elif c == '16':
+                Log.showAll('[]')
+            elif c == '17':
+                pass
             elif c == '20':
                 manager.test()
             elif c == 'exit()':

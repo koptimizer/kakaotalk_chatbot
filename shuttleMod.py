@@ -51,7 +51,7 @@ def getShuttleTimes(inputTimes, now):
 
     return outputTimes
 
-def buildText(dest):
+def getShuttleText(dest):
     now = datetime.now()
     print('데이트타임:' + str(now))
 
@@ -67,7 +67,7 @@ def buildText(dest):
     elif dest == 'UnivToOido':
         inputTimes = UnivToOido
         resultText = '[학교 > 오이도역 실시간 안내]'
-    resultText += '\n======================'
+    #resultText += '\n======================'
 
     nextShuttleTimes = getShuttleTimes(inputTimes, now)
 
@@ -98,11 +98,11 @@ def buildText(dest):
             elif now < start:
                 resultText += '\n' + str(start.hour) + '시 ' + str(start.minute) + '분~' + str(end.hour) + '시 ' + str(end.minute) + '분[' + calcTimeDiff(start, now) + '분전]'
             resultText += '\n(' + text + ')'
-            resultText += '\n'
+            #resultText += '\n'
         elif nextShuttleTimes[0]['type'] == 'single':
             time = nextShuttleTimes[0]['time']
             resultText += '\n' + str(time.hour) + '시 ' + str(time.minute) + '분[' + calcTimeDiff(time, now) + '분전]'
-            resultText += '\n'
+            #resultText += '\n'
 
         if nextShuttleTimes[1]['type'] == 'range':
             start = nextShuttleTimes[1]['start']
@@ -117,6 +117,6 @@ def buildText(dest):
             time = nextShuttleTimes[1]['time']
             resultText += '\n' + str(time.hour) + '시 ' + str(time.minute) + '분[' + calcTimeDiff(time, now) + '분전]'
 
-    resultText += '\n======================'
+    #resultText += '\n======================'
 
     return resultText
