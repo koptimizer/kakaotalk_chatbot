@@ -19,7 +19,7 @@ def getBusText():
             '224000036' : '11-A'}
 
     for item in resultList:
-        resultText += routeId[item['routeId']] + '번 버스'
+        resultText += '* ' + routeId[item['routeId']] + '번 버스'
 
         if item['predictTime1']:
             resultText += ' [' + str(item['predictTime1']) + '분 전]'

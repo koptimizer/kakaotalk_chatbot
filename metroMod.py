@@ -12,7 +12,8 @@ def getMetroText(stationName):
         return '오류발생 ' + responseDict['code']
 
     if not responseDict['arrivalList']:
-        return '운행종료'
+        #return '지하철 운행종료'
+        return ''
 
     toDG = '[당고개행 지하철 안내]\n'
     toOido = '[오이도행 지하철 안내]\n'
