@@ -165,7 +165,7 @@ class User(models.Model):
             print(user.user_key + '\t' + str(user.user_name) + '\t\t' + str(user.group))
 
     def setDoNextKeywordCheck(self, TrueOrFalse):
-        self.DoNextkeywordCheck = TrueOrFalse
+        self.doNextKeywordCheck = TrueOrFalse
         self.save()
 
     def getByGroup(group_name):
@@ -1009,8 +1009,13 @@ class manager():
                 return
             start = datetime.datetime.now()
             print('응답 > ' + Response.getResponseText(user, userMessage), end = ' ')
+            manager.printInf(user)
             timeDiff = datetime.datetime.now() - start
             print(str(timeDiff.total_seconds()) + 's')
+
+    def printInf(user):
+        print('user.doNextKeywordCheck=' + str(user.doNextKeywordCheck))
+        print('user.combineIdList=' + str(user.combineIdList))
 
     def init():
         # 초기에 여기서 init을 해주어야 inflate을 호출가능 하도록 해야 할 듯?

@@ -19,11 +19,11 @@ def getMetroText(stationName):
     for arrival in responseDict['arrivalList']:
         if arrival['updnLine'] == '상행':
             if arrival['arvlStatus'] == '전역 도착':
-                toDG += '오이도역 대기/출발' + '\n'
+                toDG += '* 오이도역 출발/대기중' + '\n'
             else:
-                toDG += arrival['arvlMsg2'] + '\n'
+                toDG += '* ' + arrival['arvlMsg2'] + '\n'
         elif arrival['updnLine'] == '하행':
-            toOido += arrival['arvlMsg2'] + '\n'
+            toOido += '* ' + arrival['arvlMsg2'] + '\n'
 
     return toDG + '\n' + toOido
 
