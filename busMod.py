@@ -2,68 +2,66 @@ import urllib.request
 from xml.etree import ElementTree
 from . import keys
 
-#routeId = {'26' : '224000020', '26-1' : '224000027', '20-1' : '224000011', '25' : '224000007', '28' : '224000021', '28-1' : '224000048', '29' : '224000022', '29-1' : '224000049', '30' : '224000012', '7' : '224000033', '11-A' : '224000036'}
-
-def getBusText():
+def getBusText(stationName):
     stationId = {'정왕역' : '224000023', '정왕역환승센터' : '224000837'}
-    resultList = getBusArrivalList(stationId['정왕역환승센터'], keys.data_go_kr)
 
-    resultText = '[정왕역환승센터 정류장 실시간 안내]\n'
-    #resultText += '\n======================\n'
+    responseDict = get(stationId[stationName])
+    if responseDict['status'] == 'fail':
+        return '오류발생(CODE:' + responseDict['code'] + ')'
+    elif responseDict['status'] == 'nodata':
+        return stationName + ' 버스 운행은 종료되었습니다'
 
     routeId = {'224000020' : '26', '224000027' : '26-1',
-            '224000011' : '20-1', '224000007' : '25',
-            '224000021' : '28', '224000048' : '28-1',
-            '224000022' : '29', '224000049' : '29-1',
-            '224000012' : '30', '224000033' : '7',
-            '224000036' : '11-A'}
+                '224000011' : '20-1', '224000007' : '25',
+                '224000021' : '28', '224000048' : '28-1',
+                '224000022' : '29', '224000049' : '29-1',
+                '224000012' : '30', '224000033' : '7',
+                '224000036' : '11-A'}
 
-    for item in resultList:
-        resultText += '* ' + routeId[item['routeId']] + '번 버스'
+    text = '[정왕역환승센터 정류장 실시간 안내]\n'
+    for arrival in responseDict['arrivalList']:
+        text += routeId[arrival['routeId']] + ' 버스: '
+        if arrival['predictTime1']:
+            text += '[' + arrival['predictTime1'] + '분 전]'
+        if arrival['predictTime2']:
+            text += '[' + arrival['predictTime2'] + '분 전]'
+        text += '\n'
 
-        if item['predictTime1']:
-            resultText += ' [' + str(item['predictTime1']) + '분 전]'
+    return text
 
-        if item['predictTime2']:
-            resultText += ' [' + str(item['predictTime2']) + '분 전]'
+def get(stationId):
+    api_response = request(stationId)
+    root = ElementTree.fromstring(api_response)
 
-        resultText += '\n'
-
-    #resultText += '======================'
-
-    return resultText
-
-def getBusArrivalList(stationId, key):
-
-    if stationId == '224000837':
-        print('정왕역환승센터')
-    elif stationId == '224000023':
-        print('정왕역')
+    resultCode = root.find('msgHeader').find('resultCode').text
+    if resultCode == '0':
+        resultDict = {'status' : 'success', 'code' : resultCode}
+    elif resultCode == '4':
+        resultDict = {'status' : 'nodata', 'code' : resultCode}
+        return resultDict
     else:
-        print('알 수 없는 stationId')
+        resultDict = {'status' : 'fail', 'code' : resultCode}
+        return resultDict
 
-    url = 'http://openapi.gbis.go.kr/ws/rest/busarrivalservice/station?serviceKey=' + key + '&stationId=' + stationId
+    arrivalList = list()
+    for arrival in root.find('msgBody').findall('busArrivalList'):
+        element = {'routeId' : arrival.find('routeId').text,
+                'predictTime1' : arrival.find('predictTime1').text,
+                'predictTime2' : arrival.find('predictTime2').text}
+        arrivalList.append(element)
+
+    resultDict['arrivalList'] = arrivalList
+    return resultDict
+
+def request(stationId):
+    url = 'http://openapi.gbis.go.kr/ws/rest/busarrivalservice/station?serviceKey='
+    url += keys.data_go_kr + '&stationId='
+    url += stationId
+
     req = urllib.request.Request(url)
     fp = urllib.request.urlopen(req)
     result = fp.read()
     fp.close()
 
-    print(result.decode('UTF-8'))
-    root = ElementTree.fromstring(result.decode('UTF-8'))
-    if root.find('msgHeader').find('resultCode').text == '4':
-        return []
-
-    busArrivalList = root.find('msgBody').findall('busArrivalList')
-
-    resultList = list()
-    for item in busArrivalList:
-        itemDict = {
-                    'routeId' : item.find('routeId').text,
-                    'predictTime1' : item.find('predictTime1').text,
-                    'predictTime2' : item.find('predictTime2').text
-                   }
-
-        resultList.append(itemDict)
-
-    print('getBusArrivalList 종료')
-    return resultList
+    #return ElementTree.fromstring(result.decode('UTF-8'))
+    return result.decode('UTF-8')

@@ -10,10 +10,12 @@ def getMetroText(stationName):
     responseDict = get(stationName)
     if responseDict['status'] == 'fail':
         return '오류발생 ' + responseDict['code']
+    elif responseDict['status'] == 'nodata':
+        return stationName + '역 지하철 운행은 종료되었습니다'
 
-    if not responseDict['arrivalList']:
+    #if not responseDict['arrivalList']:
         #return '지하철 운행종료'
-        return ''
+    #    return ''
 
     toDG = '[당고개행 지하철 안내]\n'
     toOido = '[오이도행 지하철 안내]\n'
@@ -32,16 +34,28 @@ def get(stationName):
     # arvlMsg2(현재 위치), arvlMsg3, arvlCd, updnLine('상행' or '하행')
     # 오류 발생시 status = 'fail', 정상 작동시 'success'
     api_response = request(stationName)
+    print('api_response = ' + str(api_response))
 
     arvlCd = {'0' : '진입', '1' : '도착', '2' : '출발', '3' : '전역출발', '4' : '전역진입', '5' : '전역 도착', '99' : '운행중'}
 
     resultDict = dict()
-    resultDict['code'] = api_response['errorMessage']['code']
+    if 'errorMessage' in api_response:
+        resultDict['code'] = api_response['errorMessage']['code']
+    else:
+        resultDict['code'] = api_response['code']
+
     if resultDict['code'] == 'INFO-000':
         resultDict['status'] = 'success'
+    elif resultDict['code'] == 'INFO-200':
+        resultDict['status'] = 'nodata'
+        return resultDict
     else:
         resultDict['status'] = 'fail'
         return resultDict
+
+    #if not responseDict['arrivalList']: # 운행 종료
+    #    resultDict['status'] = 'nodata'
+    #    return ''
 
     arrivalList = list()
     for element in api_response['realtimeArrivalList']:

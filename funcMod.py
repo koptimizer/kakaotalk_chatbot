@@ -59,7 +59,7 @@ def getFuncMessage(user, response):
         userMessage = messageList.pop()
 
         if userMessage == '정왕셔틀':
-            return shuttleMod.getShuttleText('JWToUniv') + '\n\n' + busMod.getBusText()
+            return shuttleMod.getShuttleText('JWToUniv') + '\n\n' + busMod.getBusText('정왕역환승센터')
         elif userMessage == '학교셔틀':
             return shuttleMod.getShuttleText('UnivToJW') + '\n\n' + shuttleMod.getShuttleText('UnivToOido') + '\n\n' + metroMod.getMetroText('정왕')
         elif userMessage == '오이도셔틀':
