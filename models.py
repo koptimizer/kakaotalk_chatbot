@@ -1062,9 +1062,9 @@ class manager():
                 return
             start = datetime.datetime.now()
             print('응답 > ' + Response.getResponseText(user, userMessage), end = ' ')
-            manager.printInf(user)
+            #manager.printInf(user)
             timeDiff = datetime.datetime.now() - start
-            print(str(timeDiff.total_seconds()) + 's')
+            print('(' + str(timeDiff.total_seconds()) + 's)')
 
     def printInf(user):
         print('user.doNextKeywordCheck=' + str(user.doNextKeywordCheck))
