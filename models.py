@@ -479,7 +479,7 @@ class Keyword(models.Model):
         responses = Response.getResponsesWithCombineId(combineIds)
 
         for response in responses:
-            responses.delete()
+            response.delete()
         target.delete()
 
     class manages():
