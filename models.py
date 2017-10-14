@@ -473,6 +473,8 @@ class Keyword(models.Model):
                     Keyword.removeKeyword(expression)
                 else:
                     print('취소되었습니다')
+            else:
+                Keyword.removeKeyword(expression)
 
         def modifyKeyword():
             Keyword.showAll()
