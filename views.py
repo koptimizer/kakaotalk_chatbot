@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from main.models import User
 from main.models import Response
 from main.models import Log
+from main.models import Mail
 
 import json
 import datetime
@@ -20,8 +21,14 @@ def message(request):
 
     user = User.getOrCreate(user_key)
 
+    numOfMails = Mail.getNumOfMails(user)
+    if numOfMails:
+        botMessage = '[' + str(numOfMails) + '개의 메시지]\n'
+    else:
+        botMessage = ''
+
     start = datetime.datetime.now()
-    botMessage = Response.getResponseText(user, userMessage)
+    botMessage += Response.getResponseText(user, userMessage)
     timeDiff = datetime.datetime.now() - start
 
     Log.write(user, userMessage, botMessage, timeDiff.total_seconds())
