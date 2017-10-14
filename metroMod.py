@@ -53,10 +53,6 @@ def get(stationName):
         resultDict['status'] = 'fail'
         return resultDict
 
-    #if not responseDict['arrivalList']: # 운행 종료
-    #    resultDict['status'] = 'nodata'
-    #    return ''
-
     arrivalList = list()
     for element in api_response['realtimeArrivalList']:
         arrivalList.append({'arvlMsg2' : element['arvlMsg2'], 'arvlMsg3' : element['arvlMsg3'],'arvlStatus' : arvlCd[element['arvlCd']], 'updnLine' : element['updnLine'], 'btrainNo' : int(element['btrainNo'])})

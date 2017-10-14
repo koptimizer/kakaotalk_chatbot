@@ -55,15 +55,17 @@ def getFuncMessage(user, response):
         return text
 
     elif response.func == 'shuttle':
+        Shuttle = getattr(importlib.import_module('main.models'), 'Shuttle')
+
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
 
         if userMessage == '정왕셔틀':
-            return shuttleMod.getShuttleText('JWToUniv') + '\n\n' + busMod.getBusText('정왕역환승센터')
+            return Shuttle.getShuttleText('정왕역', '학교') + '\n\n' + busMod.getBusText('정왕역환승센터')
         elif userMessage == '학교셔틀':
-            return shuttleMod.getShuttleText('UnivToJW') + '\n\n' + shuttleMod.getShuttleText('UnivToOido') + '\n\n' + metroMod.getMetroText('정왕')
+            return Shuttle.getShuttleText('학교', '정왕역') + '\n\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n\n' + metroMod.getMetroText('정왕')
         elif userMessage == '오이도셔틀':
-            return shuttleMod.getShuttleText('OidoToUniv')
+            return Shuttle.getShuttleText('오이도역', '학교')
         else:
             return '셔틀 도착시간을 알고싶으시다면..\n\'정왕셔틀\',\n\'학교셔틀\',\n\'오이도셔틀\'\n이라고 물어보세요!'
 
