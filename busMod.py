@@ -20,7 +20,7 @@ def getBusText(stationName):
 
     text = '[정왕역환승센터 정류장 실시간 안내]\n'
     for arrival in responseDict['arrivalList']:
-        text += routeId[arrival['routeId']] + ' 버스: '
+        text += '* ' + routeId[arrival['routeId']] + ' 버스: '
         if arrival['predictTime1']:
             text += '[' + arrival['predictTime1'] + '분 전]'
         if arrival['predictTime2']:

@@ -8,13 +8,20 @@ import random
 class Shuttle(models.Model):
     departure = models.CharField(max_length = 20, null = False)
     arrival = models.CharField(max_length = 20, null = False)
-    Time = models.TimeField(null = True, default = None)
+    Time_End = models.TimeField(null = True, default = None)
     Time_Start = models.TimeField(null = True, default = None)
     week = models.CharField(max_length = 20, null = True) # 주중, 주말, 무관
 
     # 만약 Time_Start가 존재하면 Time까지 수시운행 시간인 것
     def __str__(self):
         return self.departure + '>' + self.arrival + ':' + self.strtime()
+
+    def showAll():
+        print('====================SHUTTLE=======================')
+        print('departure/arrival\tweek\tTime_Start\tTime_End')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+        for shuttle in Shuttle.objects.all().order_by('departure', 'arrival', 'week', 'Time_End'):
+            print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime())
 
     def getShuttleText(departure, arrival):
         text = '[' + departure + '>' + arrival + ' 셔틀 실시간 안내]\n'
@@ -30,9 +37,9 @@ class Shuttle(models.Model):
 
     def strtime(self): # 몇시 몇분인지 str 리턴
         if self.Time_Start:
-            return str(self.Time_Start.hour) + '시' + str(self.Time_Start.minute) + '분~' + str(self.Time.hour) + '시' + str(self.Time.minute) + '분'
+            return str(self.Time_Start.hour) + '시' + str(self.Time_Start.minute) + '분~' + str(self.Time_End.hour) + '시' + str(self.Time_End.minute) + '분'
         else:
-            return str(self.Time.hour) + '시' + str(self.Time.minute) + '분'
+            return str(self.Time_End.hour) + '시' + str(self.Time_End.minute) + '분'
 
     def strDiff(self): # 몇분 전인지 str 리턴
         now = datetime.datetime.now().time()
@@ -40,27 +47,31 @@ class Shuttle(models.Model):
         if self.Time_Start:
             Time_Start_totalminutes = (self.Time_Start.hour * 60) + self.Time_Start.minute
             diffMinutes = Time_Start_totalminutes - now_totalminutes
-            return '[' + str(diffMinutes) + '분전]'
+            if diffMinutes > 1:
+                return '[' + str(diffMinutes) + '분전]'
+            else:
+                return '[운행중]'
+
         else:
-            Time_totalminutes = (self.Time.hour * 60) + self.Time.minute
+            Time_totalminutes = (self.Time_End.hour * 60) + self.Time_End.minute
             diffMinutes = Time_totalminutes - now_totalminutes
             return '[' + str(diffMinutes) + '분전]'
 
     def getNextShuttles(departure, arrival, maxCnt = 2):
         now = datetime.datetime.now()
-        if now.weekday() in range(1, 6): # 1 ~ 5
+        if now.weekday() in range(0, 6): # 0 ~ 5
             todayWeek = '주중'
         else: # 6 ~ 7 
             todayWeek = '주말'
-        return Shuttle.objects.filter(departure = departure, arrival = arrival, Time__gte = now.time(), week__in = [todayWeek, '무관'])[0 : maxCnt]
+        return Shuttle.objects.filter(departure = departure, arrival = arrival, Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
 
     def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None):
         time = datetime.time(hour, minute)
         if (start_hour or start_minute):
             start_time = datetime.time(start_hour, start_minute)
-            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time = time, Time_Start = start_time)
+            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_Start = start_time, Time_End = time)
         else:
-            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time = time)
+            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_End = time)
 
 class Group(models.Model):
     group_name = models.CharField(max_length = 30, null = False, unique = True)

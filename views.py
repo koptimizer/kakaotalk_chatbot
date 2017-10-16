@@ -21,15 +21,13 @@ def message(request):
 
     user = User.getOrCreate(user_key)
 
+    start = datetime.datetime.now()
+    botMessage = Response.getResponseText(user, userMessage)
+    timeDiff = datetime.datetime.now() - start
+
     numOfMails = Mail.getNumOfMails(user)
     if numOfMails:
-        botMessage = '[' + str(numOfMails) + '개의 메시지]\n'
-    else:
-        botMessage = ''
-
-    start = datetime.datetime.now()
-    botMessage += Response.getResponseText(user, userMessage)
-    timeDiff = datetime.datetime.now() - start
+        botMessage = '[' + str(numOfMails) + '개의 메시지]\n\n' + botMessage
 
     Log.write(user, userMessage, botMessage, timeDiff.total_seconds())
 
