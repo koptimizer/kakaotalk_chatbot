@@ -2,6 +2,7 @@ Python-Django 를 기반으로한 카카오톡 채팅봇 프로젝트입니다.
 
 취미삼아서 개인적으로 사용할 목적으로 만들었습니다.
 
+* 운영중인 카카오톡 채팅봇 '봉자봇' URL : https://pf.kakao.com/_PxhxiSd
 * 앱 이름은 main 입니다.(python manage.py startapp main)
 * models.py에 정의된 대화식 인터페이스를 통해 키워드 및 응답을 관리할 수 있습니다.
  - Django shell 진입 -> ' > from main.models import manager' -> ' > manager.inflate()'
@@ -27,3 +28,5 @@ ex) '^뭐[해(하니)]\??$' -> '뭐해'<br>
 6. Combine은 다음의 기능을 합니다.<br>
 6-1. Keyword로 등록은 했으나 아직 대화에서는 반영하고싶지 않은 경우, Combine에서 등록하지 않으면 됩니다.<br>
 6-2. '너 사랑해', '사랑해 너' 등 주어가 앞, 뒤에 나타날 수 있는 우리말 특성을 고려할 수 있습니다.
+
+

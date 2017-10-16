@@ -60,16 +60,16 @@ def getFuncMessage(user, response):
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
 
-        if re.search('정왕역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅈㅇㅇ?[ㅄ(ㅂㅅ)(ㅅㅌ)]', userMessage):
-            return Shuttle.getShuttleText('정왕역', '학교') + '\n\n' + busMod.getBusText('정왕역환승센터')
-        elif re.search('학교\s?[(셔틀)(버스)]', userMessage) or re.search('ㅎㄱ[ㅄ(ㅂㅅ)(ㅅㅌ)]', userMessage):
-            return Shuttle.getShuttleText('학교', '정왕역') + '\n\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n\n' + metroMod.getMetroText('정왕')
-        elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷㅇ?[ㅄ(ㅂㅅ)(ㅅㅌ)]', userMessage):
-            return Shuttle.getShuttleText('오이도역', '학교')
-        elif userMessage == '정왕역' or userMessage == 'ㅈㅇㅇ':
+        if userMessage == '정왕역' or userMessage == 'ㅈㅇㅇ':
             return metroMod.getMetroText('정왕')
+        elif re.search('정왕역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅈㅇ', userMessage):
+            return Shuttle.getShuttleText('정왕역', '학교') + '\n\n' + busMod.getBusText('정왕역환승센터')
+        elif re.search('학교\s?[(셔틀)(버스)]', userMessage) or re.search('ㅎㄱ', userMessage):
+            return Shuttle.getShuttleText('학교', '정왕역') + '\n\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n\n' + metroMod.getMetroText('정왕')
+        elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
+            return Shuttle.getShuttleText('오이도역', '학교')
         else:
-            return '셔틀 도착시간을 알고싶으시다면..\n\'정왕셔틀\'(ㅈㅇㅅㅌ),\n\'학교셔틀\'(ㅎㄱㅅㅌ),\n\'오이도셔틀\'(ㅇㅇㄷㅅㅌ)\n이라고 물어보세요!'
+            return '셔틀/지하철 도착시간을 알고싶으시다면..\n\'정왕셔틀\'(ㅈㅇㅅㅌ),\n\'학교셔틀\'(ㅎㄱㅅㅌ),\n\'오이도셔틀\'(ㅇㅇㄷㅅㅌ),\n\'정왕역\'(ㅈㅇㅇ)\n이라고 물어보세요!'
 
     elif response.func == 'sunfood':
         menuDict = sunfoodMod.getMenuDict()
