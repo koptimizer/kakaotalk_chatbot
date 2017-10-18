@@ -84,6 +84,11 @@ def getFuncMessage(user, response):
     elif response.func == '산대전':
         return linkMessage('산대전 제보함으로 연결해드릴께요!', '산대전 제보함', 'http://kpu.fbpage.kr/#/submit')
 
+    elif response.func == 'kpuwatch':
+        messageList = eval(user.getMessageList())
+        userMessage = messageList.pop()
+        return linkMessage('KPUWatch로 연결해드릴께요!', userMessage, 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
+
 def linkMessage(botText, label, url):
     return {'message' : {'text' : botText, 'message_button' : {'label' : label, 'url' : url}}}
 

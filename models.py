@@ -357,7 +357,7 @@ class Log(models.Model):
             print(log.user.user_key + '\t' + log.userMessage)
 
     def __str__(self):
-        return self.user.user_name + '(' + self.user.user_key + ')' + '|' + self.userMessage.replace('\n', '') + '|' + self.botMessage.replace('\n', '')
+        return str(self.user.user_name) + '(' + self.user.user_key + ')' + '|' + self.userMessage.replace('\n', '') + '|' + self.botMessage.replace('\n', '')
 
     def write(user, userMessage, botMessage, delay = None):
         keywordList = Combine.convertKeywords(userMessage)
