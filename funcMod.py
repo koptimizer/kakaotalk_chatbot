@@ -63,9 +63,9 @@ def getFuncMessage(user, response):
         if userMessage == '정왕역' or userMessage == 'ㅈㅇㅇ':
             return metroMod.getMetroText('정왕')
         elif re.search('정왕역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅈㅇ', userMessage):
-            return Shuttle.getShuttleText('정왕역', '학교') + '\n\n' + busMod.getBusText('정왕역환승센터')
+            return Shuttle.getShuttleText('정왕역', '학교') + '\n' + busMod.getBusText('정왕역환승센터')
         elif re.search('학교\s?[(셔틀)(버스)]', userMessage) or re.search('ㅎㄱ', userMessage):
-            return Shuttle.getShuttleText('학교', '정왕역') + '\n\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n\n' + metroMod.getMetroText('정왕')
+            return Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕')
         elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
             return Shuttle.getShuttleText('오이도역', '학교')
         else:

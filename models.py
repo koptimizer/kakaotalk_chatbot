@@ -341,6 +341,13 @@ class Log(models.Model):
     delay = models.FloatField(null = True)
     keywordList = models.CharField(max_length = 100, null = True)
 
+    def showAllByUser(user):
+        print('=======================LOG========================')
+        print('user_key\tuserMessage\t')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+        for log in Log.objects.filter(user = user):
+            print(log.user.user_key + '\t' + log.userMessage)
+
     def showAllByKeyword(keywordList):
         # keywordList에 해당하는 Log의 목록을 보여줌
         print('=======================LOG========================')
@@ -912,7 +919,7 @@ class Response(models.Model):
         if response.responseType == 'text':
             message = eval(response.message)
             randNum = random.randrange(0, len(message))
-            return message[randNum]
+            return message[randNum].replace('\\n', '\n')
 
         elif response.responseType == 'func':
             message = funcMod.getFuncMessage(user, response)
@@ -1055,9 +1062,7 @@ class manager():
             elif c == '15':
                 Group.manages.removeGroup()
             elif c == '16':
-                Log.showAll('[]')
-            #elif c == '17':
-            #    pass
+                Log.showAllByKeywordList('[]')
             elif c == '20':
                 manager.test()
             elif c == 'exit()':
