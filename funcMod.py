@@ -23,12 +23,13 @@ def getFuncMessage(user, response):
         admin = User.getByGroup('admin')
         Mail.sendMail(user, admin, userMessage)
 
-        botMessage = '\'' + userMessage + '\'\n메시지가 전달되었습니다!'
-        return botMessage
+        botText = '\'' + userMessage + '\'\n메시지가 전달되었습니다!'
+        return textMessage(botText)
 
     elif response.func == 'readMail': # admin만 호출 가능
         Mail = getattr(importlib.import_module('main.models'), 'Mail')
-        return Mail.readMail(user)
+        botText = Mail.readMail(user)
+        return textMessage(botText)
 
     elif response.func == 'papago':
         messageList = eval(user.getMessageList())
@@ -51,8 +52,8 @@ def getFuncMessage(user, response):
             print("Error Code:" + rescode)
 
         dict = json.loads(response_body.decode('utf-8'))
-        text = dict['message']['result']['translatedText']
-        return text
+        botText = dict['message']['result']['translatedText']
+        return textMessage(botText)
 
     elif response.func == '교통':
         Shuttle = getattr(importlib.import_module('main.models'), 'Shuttle')
@@ -61,20 +62,31 @@ def getFuncMessage(user, response):
         userMessage = messageList.pop()
 
         if userMessage == '정왕역' or userMessage == 'ㅈㅇㅇ':
-            return metroMod.getMetroText('정왕')
+            botText = metroMod.getMetroText('정왕')
         elif re.search('정왕역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅈㅇ', userMessage):
-            return Shuttle.getShuttleText('정왕역', '학교') + '\n' + busMod.getBusText('정왕역환승센터')
+            botText = Shuttle.getShuttleText('정왕역', '학교') + '\n' + busMod.getBusText('정왕역환승센터')
         elif re.search('학교\s?[(셔틀)(버스)]', userMessage) or re.search('ㅎㄱ', userMessage):
-            return Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕')
+            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕')
         elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
-            return Shuttle.getShuttleText('오이도역', '학교')
+            botText = Shuttle.getShuttleText('오이도역', '학교')
         else:
-            return '셔틀/지하철 도착시간을 알고싶으시다면..\n\'정왕셔틀\'(ㅈㅇㅅㅌ),\n\'학교셔틀\'(ㅎㄱㅅㅌ),\n\'오이도셔틀\'(ㅇㅇㄷㅅㅌ),\n\'정왕역\'(ㅈㅇㅇ)\n이라고 물어보세요!'
+            botText = '셔틀/지하철 도착시간을 알고싶으시다면..\n\'정왕셔틀\'(ㅈㅇㅅㅌ),\n\'학교셔틀\'(ㅎㄱㅅㅌ),\n\'오이도셔틀\'(ㅇㅇㄷㅅㅌ),\n\'정왕역\'(ㅈㅇㅇ)\n이라고 물어보세요!'
+        return textMessage(botText)
 
     elif response.func == 'sunfood':
         menuDict = sunfoodMod.getMenuDict()
-        botMessage = '오늘 선푸드 메뉴를 알려드릴께요!'
-        botMessage += '\n\n' + '[조식]' + menuDict['breakfast']
-        botMessage += '\n\n' + '[중식]' + menuDict['lunch']
-        botMessage += '\n\n' + '[석식]' + menuDict['dinner']
-        return botMessage
+        botText = '오늘 선푸드 메뉴를 알려드릴께요!'
+        botText += '\n\n' + '[조식]' + menuDict['breakfast']
+        botText += '\n\n' + '[중식]' + menuDict['lunch']
+        botText += '\n\n' + '[석식]' + menuDict['dinner']
+        return textMessage(botText)
+
+    elif response.func == '산대전':
+        return linkMessage('산대전 제보함으로 연결해드릴께요!', '산대전 제보함', 'http://kpu.fbpage.kr/#/submit')
+
+def linkMessage(botText, label, url):
+    return {'message' : {'text' : botText, 'message_button' : {'label' : label, 'url' : url}}}
+
+def textMessage(botText):
+    return {'message' : {'text' : botText}}
+

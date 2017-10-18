@@ -22,16 +22,16 @@ def message(request):
     user = User.getOrCreate(user_key)
 
     start = datetime.datetime.now()
-    botMessage = Response.getResponseText(user, userMessage)
+    botMessageDict = Response.getResponseDict(user, userMessage)
     timeDiff = datetime.datetime.now() - start
 
     numOfMails = Mail.getNumOfMails(user)
     if numOfMails:
-        botMessage = '[' + str(numOfMails) + '개의 메시지]\n\n' + botMessage
+        botMessageDict['message']['text'] = '[' + str(numOfMails) + '개의 메시지]\n\n' + botMessageDict['message']['text']
 
-    Log.write(user, userMessage, botMessage, timeDiff.total_seconds())
+    Log.write(user, userMessage, botMessageDict['message']['text'], timeDiff.total_seconds())
 
-    botMessageDumped = json.dumps({'message' : {'text' : botMessage}})
+    botMessageDumped = json.dumps(botMessageDict)
 
     return HttpResponse(botMessageDumped)
 

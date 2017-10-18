@@ -880,7 +880,7 @@ class Response(models.Model):
 
         return None
 
-    def getResponseText(user, userMessage):
+    def getResponseDict(user, userMessage):
         # 만약 user.keywordCheck가 True이면 정상적으로 진행
         # False이면, userMessage를 convert할 필요도 없고 그것을 getCombineId 할 필요도 없음
         # User 입장에서 combineIdList는 뭐라고 입력하지 -> 그냥0을 추가할까 -> 나쁘지 않은 듯?
@@ -913,17 +913,16 @@ class Response(models.Model):
         if response:
             return Response.getMessage(user, response)
         else:
-            return 'Combine으로 등록되었으나 해당하는 Response가 없습니다'
+            return {'message' : {'text' : 'Combine으로 등록되었으나 해당하는 Response가 없습니다'}}
 
     def getMessage(user, response):
         if response.responseType == 'text':
             message = eval(response.message)
             randNum = random.randrange(0, len(message))
-            return message[randNum].replace('\\n', '\n')
+            return {'message' : {'text' : message[randNum].replace('\\n', '\n') }}
 
         elif response.responseType == 'func':
-            message = funcMod.getFuncMessage(user, response)
-            return message
+            return funcMod.getFuncMessage(user, response)
 
     class manages():
         def createResponse():
@@ -1077,7 +1076,7 @@ class manager():
             if userMessage == 'exit()':
                 return
             start = datetime.datetime.now()
-            print('응답 > ' + Response.getResponseText(user, userMessage), end = ' ')
+            print('응답 > ' + Response.getResponseDict(user, userMessage)['message']['text'], end = ' ')
             #manager.printInf(user)
             timeDiff = datetime.datetime.now() - start
             print('(' + str(timeDiff.total_seconds()) + 's)')
