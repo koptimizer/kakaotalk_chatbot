@@ -24,11 +24,11 @@ class Shuttle(models.Model):
             print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime())
 
     def getShuttleText(departure, arrival):
-        text = '[' + departure + '>' + arrival + ' 셔틀 실시간 안내]\n'
+        text = '[' + departure + '>' + arrival + ' 셔틀 안내]\n'
 
         shuttles = Shuttle.getNextShuttles(departure, arrival, maxCnt = 2)
         if not shuttles:
-            return departure + '>' + arrival + ' 셔틀정보가 없습니다'
+            return departure + '>' + arrival + ' 셔틀정보가 없습니다\n'
 
         for shuttle in shuttles:
             text += '* ' + shuttle.strtime() + shuttle.strDiff() + '\n'
@@ -346,6 +346,13 @@ class Log(models.Model):
         print('user_key\tuserMessage\t')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
         for log in Log.objects.filter(user = user):
+            print(log.user.user_key + '\t' + log.userMessage)
+
+    def showAllByUsername(user_name):
+        print('=======================LOG========================')
+        print('user_key\tuserMessage\t')
+        print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+        for log in Log.objects.filter(user = User.objects.get(user_name = user_name)):
             print(log.user.user_key + '\t' + log.userMessage)
 
     def showAllByKeyword(keywordList):
@@ -1061,7 +1068,7 @@ class manager():
             elif c == '15':
                 Group.manages.removeGroup()
             elif c == '16':
-                Log.showAllByKeywordList('[]')
+                Log.showAllByKeyword('[]')
             elif c == '20':
                 manager.test()
             elif c == 'exit()':
@@ -1070,7 +1077,9 @@ class manager():
                 print('잘못된 입력입니다.')
 
     def test():
-        user = User.getOrCreate(user_key = 'testuser')
+        #user = User.getOrCreate(user_key = 'testuser')
+        #user = User.objects.get(group = Group.objects.get(group_name = 'gf'))
+        user = User.objects.get(user_name = '임종길')
         while(True):
             userMessage = input('[exit()]종료 > ')
             if userMessage == 'exit()':
