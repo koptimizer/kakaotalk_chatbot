@@ -59,9 +59,14 @@ class Shuttle(models.Model):
 
     def getNextShuttles(departure, arrival, maxCnt = 2):
         now = datetime.datetime.now()
-        if now.weekday() in range(0, 6): # 0 ~ 5
+        if now.weekday() in range(0, 5): # 0 ~ 4 : 0(월), 1(화), 2(수), 3(목), 4(금)
+            print('weekday = ' + str(now.weekday()))
             todayWeek = '주중'
-        else: # 6 ~ 7 
+        elif now.weekday() == 5: # 토요일, 5(토)
+            todayWeek = '토요일'
+        elif now.weekday() == 6: # 일요일, 6(일)
+            todayWeek = '일요일'
+        else:
             todayWeek = '주말'
         return Shuttle.objects.filter(departure = departure, arrival = arrival, Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
 

@@ -44,6 +44,9 @@ def getFuncMessage(user, response):
         response = urllib.request.urlopen(request, data = data.encode("utf-8"))
         rescode = response.getcode()
 
+
+
+
         if(rescode == 200):
             response_body = response.read()
             #print(response_body.decode('utf-8'))
@@ -88,6 +91,20 @@ def getFuncMessage(user, response):
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
         return linkMessage('KPUWatch로 연결해드릴께요!', userMessage, 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
+
+    elif response.func == 'on':
+        url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/led/on'
+        request = urllib.request.Request(url)
+        request.add_header("x-api-key", keys.api_gateway)
+        response = urllib.request.urlopen(request)
+        return textMessage('불을 켰다!')
+
+    elif response.func == 'off':
+        url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/led/off'
+        request = urllib.request.Request(url)
+        request.add_header("x-api-key", keys.api_gateway)
+        response = urllib.request.urlopen(request)
+        return textMessage('불을 껐다!')
 
 def linkMessage(botText, label, url):
     return {'message' : {'text' : botText, 'message_button' : {'label' : label, 'url' : url}}}
