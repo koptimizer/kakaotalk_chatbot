@@ -11,17 +11,18 @@ class Shuttle(models.Model):
     Time_End = models.TimeField(null = True, default = None)
     Time_Start = models.TimeField(null = True, default = None)
     week = models.CharField(max_length = 20, null = True) # 주중, 주말, 무관
+    validDate = models.DateField(auto_now_add = False, null = False) # 이 날자까지만 유효한 셔틀시간
 
     # 만약 Time_Start가 존재하면 Time까지 수시운행 시간인 것
     def __str__(self):
-        return self.departure + '>' + self.arrival + ':' + self.strtime()
+        return self.departure + '>' + self.arrival + ':' + self.strtime() + ':' + str(self.validDate)
 
     def showAll():
         print('====================SHUTTLE=======================')
-        print('departure/arrival\tweek\tTime_Start\tTime_End')
+        print('departure/arrival\tweek\tTime_Start(~Time_End)\tvalidDateTime')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
         for shuttle in Shuttle.objects.all().order_by('departure', 'arrival', 'week', 'Time_End'):
-            print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime())
+            print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime() + '\t' + str(shuttle.validDate)) 
 
     def getShuttleText(departure, arrival):
         text = '[' + departure + '>' + arrival + ' 셔틀 안내]\n'
@@ -57,7 +58,11 @@ class Shuttle(models.Model):
             diffMinutes = Time_totalminutes - now_totalminutes
             return '[' + str(diffMinutes) + '분전]'
 
+    def test():
+        print(str(Shuttle.getNextShuttles('정왕역', '학교')))
+
     def getNextShuttles(departure, arrival, maxCnt = 2):
+        # validDateTime을 고려해야함
         now = datetime.datetime.now()
         if now.weekday() in range(0, 5): # 0 ~ 4 : 0(월), 1(화), 2(수), 3(목), 4(금)
             print('weekday = ' + str(now.weekday()))
@@ -68,7 +73,9 @@ class Shuttle(models.Model):
             todayWeek = '일요일'
         else:
             todayWeek = '주말'
-        return Shuttle.objects.filter(departure = departure, arrival = arrival, Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
+        # 요일이 의미 없는 것이라면 '무관'
+
+        return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__lte = now.date(), Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
 
     def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None):
         time = datetime.time(hour, minute)
