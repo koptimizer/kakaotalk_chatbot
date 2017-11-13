@@ -75,7 +75,7 @@ class Shuttle(models.Model):
             todayWeek = '주말'
         # 요일이 의미 없는 것이라면 '무관'
 
-        return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__lte = now.date(), Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
+        return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__gte = now.date(), Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
 
     def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None):
         time = datetime.time(hour, minute)

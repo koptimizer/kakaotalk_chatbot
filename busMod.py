@@ -2,8 +2,11 @@ import urllib.request
 from xml.etree import ElementTree
 from . import keys
 
+# http://www.gbis.go.kr/gbis2014/publicService.action?cmd=tBusStationList 요기서 정류소ID 조회가능
+# http://www.gbis.go.kr/gbis2014/schBus.action?cmd=mainSearchText&gubun=busInfo&searchText=11-B&routeId=224000037 요기서 routeId 조회가능
+
 def getBusText(stationName):
-    stationId = {'정왕역' : '224000023', '정왕역환승센터' : '224000837'}
+    stationId = {'시흥시외버스터미널' : '224000861', '정왕역' : '224000023', '정왕역환승센터' : '224000837'}
 
     responseDict = get(stationId[stationName])
     if responseDict['status'] == 'fail':
@@ -16,9 +19,11 @@ def getBusText(stationName):
                 '224000021' : '28', '224000048' : '28-1',
                 '224000022' : '29', '224000049' : '29-1',
                 '224000012' : '30', '224000033' : '7',
-                '224000036' : '11-A'}
+                '224000036' : '11-A', '224000050' : '3400',
+                '216000047' : '5602', '224000037' : '11-B',
+                '224000008' : '510'}
 
-    text = '[정왕역환승센터 정류장 실시간 안내]\n'
+    text = '[' + stationName + ' 정류장 실시간 안내]\n'
     for arrival in responseDict['arrivalList']:
         text += '* ' + routeId[arrival['routeId']] + ' 버스: '
         if arrival['predictTime1']:
