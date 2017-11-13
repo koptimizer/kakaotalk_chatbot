@@ -30,7 +30,7 @@ class Shuttle(models.Model):
         print('departure/arrival\tweek\tTime_Start(~Time_End)\tvalidDateTime')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
         for shuttle in Shuttle.objects.all().order_by('departure', 'arrival', 'week', 'Time_End'):
-            print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime() + '\t' + str(shuttle.validDate)) 
+            print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime() + '\t' + str(shuttle.validDate))
 
     def getShuttleText(departure, arrival, transName = ' 셔틀'):
         text = '[' + departure + '>' + arrival + transName  +' 안내]\n'
@@ -74,16 +74,16 @@ class Shuttle(models.Model):
         now = datetime.datetime.now()
         if now.weekday() in range(0, 5): # 0 ~ 4 : 0(월), 1(화), 2(수), 3(목), 4(금)
             print('weekday = ' + str(now.weekday()))
-            todayWeek = '주중'
+            todayWeek = ['주중', '무관']
         elif now.weekday() == 5: # 토요일, 5(토)
-            todayWeek = '토요일'
+            todayWeek = ['토요일', '주말', '무관']
         elif now.weekday() == 6: # 일요일, 6(일)
-            todayWeek = '일요일'
-        else:
-            todayWeek = '주말'
+            todayWeek = ['일요일', '주말', '무관']
+        #else:
+        #    todayWeek = '주말'
         # 요일이 의미 없는 것이라면 '무관'
 
-        return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__gte = now.date(), Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
+        return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__gte = now.date(), Time_End__gte = now.time(), week__in = todayWeek).order_by('Time_End')[0 : maxCnt]
 
 class Group(models.Model):
 
