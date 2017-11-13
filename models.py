@@ -17,6 +17,14 @@ class Shuttle(models.Model):
     def __str__(self):
         return self.departure + '>' + self.arrival + ':' + self.strtime() + ':' + str(self.validDate)
 
+    def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None, validDate = datetime.date(2100, 4, 3)):
+        time = datetime.time(hour, minute)
+        if (start_hour or start_minute):
+            start_time = datetime.time(start_hour, start_minute)
+            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_Start = start_time, Time_End = time, validDate = validDate)
+        else:
+            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_End = time, validDate = validDate)
+
     def showAll():
         print('====================SHUTTLE=======================')
         print('departure/arrival\tweek\tTime_Start(~Time_End)\tvalidDateTime')
@@ -24,8 +32,8 @@ class Shuttle(models.Model):
         for shuttle in Shuttle.objects.all().order_by('departure', 'arrival', 'week', 'Time_End'):
             print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime() + '\t' + str(shuttle.validDate)) 
 
-    def getShuttleText(departure, arrival):
-        text = '[' + departure + '>' + arrival + ' 셔틀 안내]\n'
+    def getShuttleText(departure, arrival, transName = ' 셔틀'):
+        text = '[' + departure + '>' + arrival + transName  +' 안내]\n'
 
         shuttles = Shuttle.getNextShuttles(departure, arrival, maxCnt = 2)
         if not shuttles:
@@ -77,15 +85,8 @@ class Shuttle(models.Model):
 
         return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__gte = now.date(), Time_End__gte = now.time(), week__in = [todayWeek, '무관']).order_by('Time_End')[0 : maxCnt]
 
-    def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None):
-        time = datetime.time(hour, minute)
-        if (start_hour or start_minute):
-            start_time = datetime.time(start_hour, start_minute)
-            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_Start = start_time, Time_End = time)
-        else:
-            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_End = time)
-
 class Group(models.Model):
+
     group_name = models.CharField(max_length = 30, null = False, unique = True)
 
     def __str__(self):
