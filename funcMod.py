@@ -10,6 +10,10 @@ import urllib.parse
 import json
 import re
 
+from bs4 import BeautifulSoup
+import random
+import requests
+
 # 각종 함수를 매핑시키기 위한 함수
 def getFuncMessage(user, response):
 
@@ -44,9 +48,6 @@ def getFuncMessage(user, response):
         response = urllib.request.urlopen(request, data = data.encode("utf-8"))
         rescode = response.getcode()
 
-
-
-
         if(rescode == 200):
             response_body = response.read()
             #print(response_body.decode('utf-8'))
@@ -69,7 +70,10 @@ def getFuncMessage(user, response):
         elif re.search('정왕역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅈㅇ', userMessage):
             botText = Shuttle.getShuttleText('정왕역', '학교') + '\n' + busMod.getBusText('정왕역환승센터')
         elif re.search('학교\s?[(셔틀)(버스)]', userMessage) or re.search('ㅎㄱ', userMessage):
-            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕')
+            #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') + '\n' + busMod.getBusText('시흥시외버스터미널')
+            #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') 
+            #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')  + '\n' + metroMod.getMetroText('정왕')
+            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')
         elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
             botText = Shuttle.getShuttleText('오이도역', '학교')
         else:
@@ -78,19 +82,37 @@ def getFuncMessage(user, response):
 
     elif response.func == 'sunfood':
         menuDict = sunfoodMod.getMenuDict()
-        botText = '오늘 선푸드 메뉴를 알려드릴께요!'
+        botText = '오늘 선푸드 메뉴를 알려드릴게요!'
         botText += '\n\n' + '[조식]' + menuDict['breakfast']
         botText += '\n\n' + '[중식]' + menuDict['lunch']
         botText += '\n\n' + '[석식]' + menuDict['dinner']
         return textMessage(botText)
 
     elif response.func == '산대전':
-        return linkMessage('산대전 제보함으로 연결해드릴께요!', '산대전 제보함', 'http://kpu.fbpage.kr/#/submit')
+        return linkMessage('산대전 제보함으로 연결해드릴게요!', '산대전 제보함', 'http://kpu.fbpage.kr/#/submit')
 
     elif response.func == 'kpuwatch':
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
-        return linkMessage('KPUWatch로 연결해드릴께요!', userMessage, 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
+        typeMessage = messageList.pop() # '교수검색' or '강의검색'
+
+        if re.search('강의', typeMessage):
+            url = 'http://kpuwatch.com/rating_search.php?subject=' + userMessage
+        elif re.search('교수', typeMessage):
+            url = 'http://kpuwatch.com/rating_search.php?professor=' + userMessage
+
+        req = requests.get(url)
+
+        bs = BeautifulSoup(req.text, 'html.parser')
+        contentList = bs.find_all('content')
+
+        if contentList:
+            rd = random.randrange(0, len(contentList))
+            resultText = '* KPUWatch에서 찾아봤어요!\n\n' + contentList[rd].text
+            return linkMessage(resultText, 'KPUWatch로 가기', 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
+        else:
+            return textMessage('원하는 검색결과가 없어요..ㅠㅠ')
+
 
     elif response.func == 'on':
         url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/led/on'
@@ -105,6 +127,35 @@ def getFuncMessage(user, response):
         request.add_header("x-api-key", keys.api_gateway)
         response = urllib.request.urlopen(request)
         return textMessage('불을 껐다!')
+
+    elif response.func == 'reserved_feed':
+        messageList = eval(user.getMessageList())
+        userMessage = messageList.pop()
+        p = re.compile('(\d\d?)시\s?(\d\d?)분')
+
+        feedtimeList = list()
+        for item in p.findall(userMessage): # 여러개의 튜플들
+            item_0 = item[0]
+            item_1 = item[1]
+            if len(item[0]) == 1:
+                item_0 = '0' + item[0]
+            if len(item[1]) == 1:
+                item_1 = '0' + item[1]
+            feedtimeList.append(item_0 + ':' + item_1)
+
+        url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/reserved-feed'
+
+        #DATA = b'device_num=1&feedtime=["13:33","15:55"]'
+        #request = urllib.request.Request(url, data = DATA, method = 'PUT')
+        #request.add_header("x-api-key", keys.api_gateway)
+        #response = urllib.request.urlopen(request)
+
+        # requests 모듈로 도전
+        data = {'device_num' : '1', 'feedtime' : feedtimeList}
+
+        resp = requests.put(url, data=json.dumps(data), headers={'Content-Type':'application/json'})
+        respDict = eval(resp.text)
+        return textMessage('명령이 처리되었습니다!!!\n' + str(respDict))
 
 def linkMessage(botText, label, url):
     return {'message' : {'text' : botText, 'message_button' : {'label' : label, 'url' : url}}}

@@ -27,7 +27,7 @@ def message(request):
 
     numOfMails = Mail.getNumOfMails(user)
     if numOfMails:
-        botMessageDict['message']['text'] = '[' + str(numOfMails) + '개의 메시지]\n\n' + botMessageDict['message']['text']
+        botMessageDict['message']['text'] = '[\'메시지\'라고 입력해주세요!(' + str(numOfMails) + '개)]\n\n' + botMessageDict['message']['text']
 
     Log.write(user, userMessage, botMessageDict['message']['text'], timeDiff.total_seconds())
 

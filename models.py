@@ -346,6 +346,11 @@ class Mail(models.Model):
     def sendMail(sender, receiver, message):
         Mail.objects.create(sender = sender, receiver = receiver, message = message)
 
+    def sendMailByAdmin(receiver_user_key, message):
+        receiver = User.objects.get(user_key = receiver_user_key)
+        sender = User.getByGroup('admin')
+        Mail.objects.create(sender = sender, receiver = receiver, message = message)
+
 class Log(models.Model):
     user = models.ForeignKey(User, on_delete = models.CASCADE)
     userMessage = models.TextField(null = True)
