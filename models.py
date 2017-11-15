@@ -17,13 +17,22 @@ class Shuttle(models.Model):
     def __str__(self):
         return self.departure + '>' + self.arrival + ':' + self.strtime() + ':' + str(self.validDate)
 
-    def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None, validDate = datetime.date(2100, 4, 3)):
-        time = datetime.time(hour, minute)
-        if (start_hour or start_minute):
-            start_time = datetime.time(start_hour, start_minute)
+    def createShuttle(departure, arrival, week, end_time, start_time = None, validDate = datetime.date(2100, 4, 3)):
+        # end_time과 start_time은 튜플로 넘기기
+        time = datetime.time(end_time[0], end_time[1]) # 수시운행이 아닐경우 end_time을 기준으로!
+        if start_time:
+            start_time = datetime.time(start_time[0], start_time[1])
             Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_Start = start_time, Time_End = time, validDate = validDate)
         else:
             Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_End = time, validDate = validDate)
+
+#    def createShuttle(departure, arrival, week, hour, minute, start_hour = None, start_minute = None, validDate = datetime.date(2100, 4, 3)):
+#        time = datetime.time(hour, minute)
+#        if (start_hour or start_minute):
+#            start_time = datetime.time(start_hour, start_minute)
+#            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_Start = start_time, Time_End = time, validDate = validDate)
+#        else:
+#            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_End = time, validDate = validDate)
 
     def showAll():
         print('====================SHUTTLE=======================')

@@ -4,6 +4,7 @@ from . import keys
 from . import busMod
 from . import metroMod # 이거때문에 시간표가 꼬임..
 from . import sunfoodMod
+from . import kpuwatchMod
 
 import urllib.request
 import urllib.parse
@@ -73,7 +74,7 @@ def getFuncMessage(user, response):
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') + '\n' + busMod.getBusText('시흥시외버스터미널')
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') 
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')  + '\n' + metroMod.getMetroText('정왕')
-            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')
+            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스') + '\n3400번 현재 시범운행인 관계로 운행스케쥴과 일치하지 않을 수도 있습니다..ㅠㅠ(기다리다가 추위에 떨어봄)'
         elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
             botText = Shuttle.getShuttleText('오이도역', '학교')
         else:
@@ -96,6 +97,13 @@ def getFuncMessage(user, response):
         userMessage = messageList.pop()
         typeMessage = messageList.pop() # '교수검색' or '강의검색'
 
+        resultText = kpuwatchMod.getKPUWatchText(typeMessage, userMessage)
+        if resultText:
+            return linkMessage(resultText, 'KPUWatch에서 보기', 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
+        else:
+            return textMessage('원하는 검색결과가 없어요! ㅜㅜ')
+
+        '''
         if re.search('강의', typeMessage):
             url = 'http://kpuwatch.com/rating_search.php?subject=' + userMessage
         elif re.search('교수', typeMessage):
@@ -109,9 +117,10 @@ def getFuncMessage(user, response):
         if contentList:
             rd = random.randrange(0, len(contentList))
             resultText = '* KPUWatch에서 찾아봤어요!\n\n' + contentList[rd].text
-            return linkMessage(resultText, 'KPUWatch로 가기', 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
+            return linkMessage(resultText, 'KPUWatch에서 보기', 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
         else:
             return textMessage('원하는 검색결과가 없어요..ㅠㅠ')
+        '''
 
 
     elif response.func == 'on':
