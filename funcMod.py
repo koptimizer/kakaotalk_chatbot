@@ -74,7 +74,7 @@ def getFuncMessage(user, response):
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') + '\n' + busMod.getBusText('시흥시외버스터미널')
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') 
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')  + '\n' + metroMod.getMetroText('정왕')
-            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스') + '\n3400번 현재 시범운행인 관계로 운행스케쥴과 일치하지 않을 수도 있습니다..ㅠㅠ(기다리다가 추위에 떨어봄)'
+            botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')
         elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
             botText = Shuttle.getShuttleText('오이도역', '학교')
         else:
@@ -137,7 +137,14 @@ def getFuncMessage(user, response):
         response = urllib.request.urlopen(request)
         return textMessage('불을 껐다!')
 
-    elif response.func == 'reserved_feed':
+    elif response.func == 'now_feed':
+        messageList = eval(user.getMessageList())
+        userMessage = messageList.pop()
+        url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/feed'
+        resp = requests.get(url)
+        return textMessage('밥 맥였따~')
+
+    elif response.func == 'set_resv_feed':
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
         p = re.compile('(\d\d?)시\s?(\d\d?)분')
@@ -154,17 +161,29 @@ def getFuncMessage(user, response):
 
         url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/reserved-feed'
 
-        #DATA = b'device_num=1&feedtime=["13:33","15:55"]'
-        #request = urllib.request.Request(url, data = DATA, method = 'PUT')
-        #request.add_header("x-api-key", keys.api_gateway)
-        #response = urllib.request.urlopen(request)
-
         # requests 모듈로 도전
         data = {'device_num' : '1', 'feedtime' : feedtimeList}
 
         resp = requests.put(url, data=json.dumps(data), headers={'Content-Type':'application/json'})
         respDict = eval(resp.text)
-        return textMessage('명령이 처리되었습니다!!!\n' + str(respDict))
+        respDictf = stringFormatConvert(respDict)
+        return textMessage('아래 시간으로 설정되었습니다.\n{}'.format(respDictf))
+
+    elif response.func == 'get_resv_feed':
+        url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/reserved-feed'
+        resp = requests.get(url)
+        respDict = eval(resp.text)
+        respDictf = stringFormatConvert(respDict)
+        return textMessage('현재 아래와 같이 설정되어있습니다.\n{}'.format(respDictf))
+
+    elif response.func == 'get_condition':
+        url = 'https://iqmbe7m049.execute-api.ap-northeast-2.amazonaws.com/test/reserved-feed'
+        resp = requests.get(url)
+        respDict = eval(resp.text)
+        temperature = respDict['state']['reported'].get('temperature')
+        humidity = respDict['state']['reported'].get('humidity')
+        #respDictf = stringFormatConvert(respDict)
+        return textMessage('현재 온도는 {0:0.1f}*,\n습도는 {1:0.1f}%'.format(temperature, humidity))
 
 def linkMessage(botText, label, url):
     return {'message' : {'text' : botText, 'message_button' : {'label' : label, 'url' : url}}}
@@ -172,3 +191,5 @@ def linkMessage(botText, label, url):
 def textMessage(botText):
     return {'message' : {'text' : botText}}
 
+def stringFormatConvert(respDict):
+    return respDict['state']['desired']['feedtime']

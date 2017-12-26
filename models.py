@@ -34,11 +34,14 @@ class Shuttle(models.Model):
 #        else:
 #            Shuttle.objects.create(departure = departure, arrival = arrival, week = week, Time_End = time, validDate = validDate)
 
+    # 간단하게 생성하는 메소드를 만들어야 해
+    # showAll을 했을 때 정리되서 나타나야하는데..!
+    # 그룹화를 하면 관리가 편할 듯!
     def showAll():
         print('====================SHUTTLE=======================')
-        print('departure/arrival\tweek\tTime_Start(~Time_End)\tvalidDateTime')
+        print('departure/arrival\tweek\tTime_Start(~Time_End)\tvalidDate')
         print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-        for shuttle in Shuttle.objects.all().order_by('departure', 'arrival', 'week', 'Time_End'):
+        for shuttle in Shuttle.objects.all().order_by('departure', 'arrival', 'week', 'validDate', 'Time_End'):
             print(shuttle.departure + '->' + shuttle.arrival + '\t' + shuttle.week + '\t' + shuttle.strtime() + '\t' + str(shuttle.validDate))
 
     def getShuttleText(departure, arrival, transName = ' 셔틀'):
@@ -93,6 +96,81 @@ class Shuttle(models.Model):
         # 요일이 의미 없는 것이라면 '무관'
 
         return Shuttle.objects.filter(departure = departure, arrival = arrival, validDate__gte = now.date(), Time_End__gte = now.time(), week__in = todayWeek).order_by('Time_End')[0 : maxCnt]
+
+    class manages():
+        def createShuttle():
+            # 생성할 셔틀의 출발지, 목적지, 주중/주말/토요일/일요일/무관, 유효기간
+
+            source = input('출발지를 입력하세요 [exit()]종료 > ')
+            if source == 'exit()': return
+
+            dest = input('목적지를 입력하세요 [exit()]종료 > ')
+            if dest == 'exit()': return
+
+            weekNo = input('[1]주중 [2]주말 [3]토요일 [4]일요일 [5]무관 [exit()]종료 > ')
+            if weekNo == 'exit()':
+                return
+            else:
+                try:
+                    weekNo = int(weekNo)
+                except:
+                    print('정수만 입력하세요')
+                    return
+
+                if weekNo > 0 and weekNo < 6:
+                    week = {1 : '주중', 2 : '주말', 3 : '토요일', 4 : '일요일', 5 : '무관'}[weekNo]
+                else:
+                    print('존재하지 않는 번호입니다')
+                    return
+
+            validDate = input('유효기간을 입력하세요 ex)2017-02-28 [exit()]종료 > ')
+            if re.search('\d{4}-\d{1,2}-\d{1,2}', validDate):
+                p = re.compile('\d+') # pattern
+
+                # 찾은 값을 리스트로 인트형 변환 후 넣음
+                year, month, day = list(map(lambda x: int(x), p.findall(validDate)))
+                #print('year:{}, month:{}, day:{}'.format(type(year), type(month), type(day)))
+
+                if year <= 2000 or month <= 0 or month > 12 or day <= 0 or day > 31:
+                    print('잘못된 입력입니다')
+                    return
+
+            elif validDate == 'exit()':
+                return
+
+            else:
+                print('잘못된 입력입니다')
+                return
+
+            validDate = datetime.date(year, month, day)
+
+            shuttleList = list()
+            while(True):
+                shuttle_time = input('셔틀시간을 입력하세요. ex)1330, 0800~0940 [exit()]종료 > ')
+                if re.search('^\d\d\d\d$', shuttle_time):
+                    shuttleList.append(shuttle_time)
+                    end_time = int(shuttle_time[0:2]), int(shuttle_time[2:4])
+                    Shuttle.createShuttle(source, dest, week, end_time, validDate = validDate)
+
+                elif re.search('^\d\d\d\d~\d\d\d\d$', shuttle_time):
+                    shuttleList.append(shuttle_time)
+                    start_time = int(shuttle_time[0:2]), int(shuttle_time[2:4])
+                    end_time = int(shuttle_time[5:7]), int(shuttle_time[7:9])
+                    Shuttle.createShuttle(source, dest, week, end_time, start_time, validDate = validDate)
+
+                elif shuttle_time == 'exit()':
+                    if not shuttleList:
+                        print('취소되었습니다')
+                        return
+                    print('\n아래와 같이 생성되었습니다.')
+                    print('\n출발지: {}, 목적지: {}, 주: {}, 유효기간: {}\n'.format(source, dest, week, validDate))
+                    for i in shuttleList:
+                        print('{}'.format(i), end = ' ')
+                    print('')
+                    return
+
+                else:
+                    print('잘못된 입력입니다.')
 
 class Group(models.Model):
 
@@ -404,6 +482,7 @@ class Log(models.Model):
             Log.showAll(targetList)
 
 class Tools():
+
     def YoN(text):
         while(True):
             yon = input(text)
@@ -1006,13 +1085,16 @@ class Response(models.Model):
             if responseId == 'exit()':
                 return
 
-            try: responseId = int(responseId)
-            except: print('정수를 입력하세요.')
+            try:
+                responseId = int(responseId)
+            except:
+                print('정수를 입력하세요.')
 
             if Tools.YoN('정말로 삭제하시겠습니까? [y/n] > '):
                 Response.removeResponseById(responseId)
                 print('삭제되었습니다')
-            else: print('삭제가 취소되었습니다')
+            else:
+                print('삭제가 취소되었습니다')
 
         def modifyResponse():
             # Response 수정
@@ -1057,7 +1139,9 @@ class manager():
             print('[12] Group 목록 확인\t[14] Group 관리')
             print('[13] Group 생성\t\t[15] Group 삭제')
             print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
-            print('[16] Keyword가 인식되지 않는 Log 목록 확인')
+            print('[16] Shuttle 조회\t\t[17] Shuttle 생성')
+            print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
+            print('[18] Keyword가 인식되지 않는 Log 목록 확인')
             #print('[17] delay가 긴 명령어 확인하기')
             #print('- - - - - - - - - - - - - - - - - - - - - - - - - ')
             print('[20] 직접 대화해보면서 테스트하기\n')
@@ -1095,6 +1179,10 @@ class manager():
             elif c == '15':
                 Group.manages.removeGroup()
             elif c == '16':
+                Shuttle.showAll()
+            elif c == '17':
+                Shuttle.manages.createShuttle()
+            elif c == '18':
                 Log.showAllByKeyword('[]')
             elif c == '20':
                 manager.test()
