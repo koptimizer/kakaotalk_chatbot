@@ -52,15 +52,16 @@ def get(menuTableRows, index):
 
     breakfastRows = list()
     for row in menuTableRows[1]('td')[1 : size1] + menuTableRows[5]('td')[1 : size5]:
-        breakfastRows.append(row.get_text())
+        #print('breakfastRows = {}'.format(row.get_text()))
+        breakfastRows.append(row.get_text().replace('\n', ' '))
 
     lunchRows = list()
     for row in menuTableRows[2]('td')[1 : size2] + menuTableRows[6]('td')[1 : size6]:
-        lunchRows.append(row.get_text())
+        lunchRows.append(row.get_text().replace('\n', ' '))
 
     dinnerRows = list()
     for row in menuTableRows[3]('td')[1 : size3] + menuTableRows[7]('td')[1 : size7]:
-        dinnerRows.append(row.get_text())
+        dinnerRows.append(row.get_text().replace('\n', ' '))
 
     print('len(breakfastRows) = %s'%len(breakfastRows))
     print('len(lunchRows) = %s'%len(lunchRows))

@@ -82,12 +82,25 @@ def getFuncMessage(user, response):
         return textMessage(botText)
 
     elif response.func == 'sunfood':
+        Miga = getattr(importlib.import_module('main.models'), 'Miga')
         menuDict = sunfoodMod.getMenuDict()
-        botText = '오늘 선푸드 메뉴를 알려드릴게요!'
-        botText += '\n\n' + '[조식]' + menuDict['breakfast']
-        botText += '\n\n' + '[중식]' + menuDict['lunch']
-        botText += '\n\n' + '[석식]' + menuDict['dinner']
+        botText = '오늘의 선푸드 메뉴'
+        botText += '\n' + '[조식]' + '\n' + menuDict['breakfast']
+        botText += '\n' + '[중식]' + '\n' + menuDict['lunch']
+        botText += '\n' + '[석식]' + '\n' + menuDict['dinner']
+
+        if Miga.getMenu():
+            botText += '\n\n' + '오늘의 미가식당 메뉴' + '\n' + Miga.getMenu()
+
         return textMessage(botText)
+
+    elif response.func == 'miga':
+        Miga = getattr(importlib.import_module('main.models'), 'Miga')
+        messageList = eval(user.getMessageList())
+        userMessage = messageList.pop()
+        Miga.createOrUpdateMenu(menu = userMessage)
+
+        return textMessage('메뉴가 등록되었습니다!')
 
     elif response.func == '산대전':
         return linkMessage('산대전 제보함으로 연결해드릴게요!', '산대전 제보함', 'http://kpu.fbpage.kr/#/submit')

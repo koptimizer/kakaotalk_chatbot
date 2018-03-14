@@ -5,6 +5,26 @@ import datetime
 import re
 import random
 
+class Miga(models.Model):
+    dateTime = models.DateField(auto_now_add = True, null = False, primary_key = True)
+    menu = models.CharField(max_length = 60, null = False)
+
+    def createOrUpdateMenu(menu):
+        try:
+            miga = Miga.objects.get(dateTime = datetime.datetime.today())
+            miga.menu = menu
+            miga.save()
+        except:
+            # 없다면?
+            Miga.objects.create(menu = menu)
+
+    def getMenu():
+        # 그날의 메뉴 리턴
+        try:
+            return Miga.objects.get(dateTime = datetime.datetime.today()).menu
+        except:
+            return None
+
 class Shuttle(models.Model):
     departure = models.CharField(max_length = 20, null = False)
     arrival = models.CharField(max_length = 20, null = False)
@@ -128,7 +148,8 @@ class Shuttle(models.Model):
                 p = re.compile('\d+') # pattern
 
                 # 찾은 값을 리스트로 인트형 변환 후 넣음
-                year, month, day = list(map(lambda x: int(x), p.findall(validDate)))
+                #year, month, day = list(map(lambda x: int(x), p.findall(validDate)))
+                year, month, day = [int(x) for x in p.findall(validDate)]
                 #print('year:{}, month:{}, day:{}'.format(type(year), type(month), type(day)))
 
                 if year <= 2000 or month <= 0 or month > 12 or day <= 0 or day > 31:
@@ -340,6 +361,12 @@ class User(models.Model):
         try:
             group = Group.objects.get(group_name = group_name)
             return User.objects.get(group = group)
+        except:
+            return None
+
+    def getGroupNameOrNone(self):
+        try:
+            return self.group.group_name
         except:
             return None
 
