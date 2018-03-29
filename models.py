@@ -5,6 +5,148 @@ import datetime
 import re
 import random
 
+import json
+import bs4
+import requests
+
+class Sunfood(models.Model):
+    dateTime = models.DateField(auto_now_add = True, null = False, primary_key = True)
+    menu_breakfast = models.CharField(max_length = 100, null = True)
+    menu_lunch = models.CharField(max_length = 100, null = True)
+    menu_dinner = models.CharField(max_length = 100, null = True)
+
+    def getMenuDict(target_date):
+        # target_date에 맞는 날자의 메뉴를 탐색하여 딕셔너리로 반환하는 메서드
+        # 데이터베이스에 해당 날자의 자료가 있으면 반환하고 없으면 크롤링후 데이터베이스 반영 및 딕셔너리 리턴
+
+        try:
+            menuDict = Sunfood.objects.get(dateTime = target_date)
+        except:
+            # 크롤링
+            # 데이터베이스 반영
+            # menuDict = 해당 메뉴 정보
+            pass
+
+        return menuDict
+
+
+    def crawlToDB():
+        # 메뉴데이터 크롤링
+        # 나타나는 모든 날자의 메뉴를 저장한다
+        datetime_now = datetime.datetime.now()
+        url = 'http://tip.kpu.ac.kr/front/boardview.do?pkid=13284&currentPage=1&searchField=ALL&menuGubun=2&bbsConfigFK=27&searchLowItem=ALL&searchValue'
+        req = requests.get(url)
+        bs = bs4.BeautifulSoup(req.text, 'html.parser')
+
+        menuTable = bs('table')[1] # 날자, 메뉴, 원산지까지 포함된 정보
+        menuTableRows = menuTable('tr')[0:8] # 날자와 메뉴까지만 포함
+
+        index = getMenuIndex(menuTableRows, datetime_now)
+
+        if index == -1:
+            return{'breakfast' : '업데이트되지 않았습니다', 'lunch' : '업데이트되지 않았습니다', 'dinner' : '업데이트되지 않았습니다'}
+
+        result = get(menuTableRows, index)
+        print(str(result))
+        return result
+
+    def convertToDict(menuTableRows):
+        # 딕셔너리 형태로 정리해서 저장
+        # 0과 4는 날자
+        # 해당 날자에 메뉴가 등록되어있지 않을 수도 있음에 유의
+
+        resultDict = dict()
+        for row in meunTableRows[0]('td')[1 : ] + menuTableRows[4]('td')[1 : ]:
+            #for i in menuTableRows[1 : 4]
+            pass
+
+        for row in menuTableRows[0]('td')[1 : ]:
+            for i in menuTableRows[1 : 4]('td')[1 : ]:
+                pass
+
+
+    def getMenuIndex(menuTableRows, datetimeObject):
+        print('getMenuIndex()')
+        # 해당 날자(datetimeObject)에 해당하는 메뉴의 인덱스를 확인한다
+        menuDatetimeList = getMenusDatetimeList(menuTableRows)
+        for item in menuDatetimeList:
+            if (datetimeObject - item).days == 0:
+                print(str(item))
+                return menuDatetimeList.index(item)
+        print('탐색된 날자 없음' + str(datetimeObject))
+        return -1 # 탐색된 날자 없음
+
+
+    def getMenusDatetimeList(menuTableRows):
+        # 주어진 날자에서 메뉴가 있는지 확인하고, 몇번째 컬럼인지 리턴, 없으면 0
+        size1 = len(menuTableRows[0]('td'))
+        size2 = len(menuTableRows[4]('td'))
+
+        menuTableRows1 = menuTableRows[0]('td')[1 : size1]
+        menuTableRows2 = menuTableRows[4]('td')[1 : size2]
+
+        datetimeList = list()
+
+        for row in menuTableRows1 + menuTableRows2:
+            datetimeList.append(datetime.datetime.strptime(row.find('p').get_text(), '%m월 %d일').replace(year = datetime.datetime.now().year))
+            #dateList.append(row.find('p').get_text()) # 전체를 찾지 않고 첫번째를 찾는다.
+
+        return datetimeList
+
+
+    def get(menuTableRows, index):
+        print('get(menuTableRows,%s)'%(index))
+        # 우선 해당 날자의 메뉴들에 접근해야 함.
+        size1 = len(menuTableRows[1]('td')) # 조식행 사이즈
+        size2 = len(menuTableRows[2]('td')) # 중식행
+        size3 = len(menuTableRows[3]('td')) # 석식행
+        size5 = len(menuTableRows[5]('td')) # 조식행
+        size6 = len(menuTableRows[6]('td')) # 중식행
+        size7 = len(menuTableRows[7]('td')) # 석식행
+
+        breakfastRows = list()
+        for row in menuTableRows[1]('td')[1 : size1] + menuTableRows[5]('td')[1 : size5]:
+            print('breakfastRows = {}'.format(row.get_text()))
+            breakfastRows.append(row.get_text(' ').replace('\n', ' '))
+
+        lunchRows = list()
+        for row in menuTableRows[2]('td')[1 : size2] + menuTableRows[6]('td')[1 : size6]:
+            lunchRows.append(row.get_text(' ').replace('\n', ' '))
+
+        dinnerRows = list()
+        for row in menuTableRows[3]('td')[1 : size3] + menuTableRows[7]('td')[1 : size7]:
+            dinnerRows.append(row.get_text(' ').replace('\n', ' '))
+
+        print('len(breakfastRows) = %s'%len(breakfastRows))
+        print('len(lunchRows) = %s'%len(lunchRows))
+        print('len(dinnerRows) = %s'%len(dinnerRows))
+
+        if min([len(breakfastRows), len(lunchRows), len(dinnerRows)]) - 1 < index:
+            index = min([len(breakfastRows), len(lunchRows), len(dinnerRows)])
+            return {'breakfast' : breakfastRows[index], 'lunch' : breakfastRows[index], 'dinner' : breakfastRows[index]}
+        else:
+            return {'breakfast' : breakfastRows[index], 'lunch' : lunchRows[index], 'dinner' : dinnerRows[index]}
+
+class Semicon(models.Model):
+    dateTime = models.DateField(auto_now_add = True, null = False, primary_key = True)
+    menu = models.CharField(max_length = 60, null = False)
+
+    def createOrUpdateMenu(menu):
+        try:
+            semicon = Semicon.objects.get(dateTime = datetime.datetime.today())
+            semicon.menu = menu
+            semicon.save()
+        except:
+            # 없다면?
+            Semicon.objects.create(menu = menu)
+
+    def getMenu():
+        # 그날의 메뉴 리턴
+        try:
+            return Semicon.objects.get(dateTime = datetime.datetime.today()).menu
+        except:
+            return None
+
 class Miga(models.Model):
     dateTime = models.DateField(auto_now_add = True, null = False, primary_key = True)
     menu = models.CharField(max_length = 60, null = False)
@@ -420,6 +562,21 @@ class User(models.Model):
                     return user
                 else:
                     print('존재하지 않는 User입니다')
+
+class recommendMenu(models.Model):
+    where = models.CharField(max_length = 50, null = False)
+    dateTime = models.DateTimeField(auto_now_add = True)
+    menu = models.CharField(max_length = 50, null = False)
+    comment = models.CharField(max_length = 200, null = True)
+    user = models.ForeignKey(User)
+
+    # 추천메뉴 등록 메소드(where, menu, comment, user)
+    def createRecommendMenu(where, menu, comment, user):
+        pass
+
+    # 추천메뉴 출력 메소드
+    def getRandomRecommendMenu():
+        pass
 
 class Mail(models.Model):
     # 만약 여기서 참조하는 User의 데이터가 지워지면 CASCADE 옵션에 의해 같이 삭제
