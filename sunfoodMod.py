@@ -27,7 +27,7 @@ def getMenu(datetimeObject):
 '''
 def getMenuDict():
     datetimeObject = datetime.datetime.now()
-    print('getMenuDict()')
+    #print('getMenuDict()')
     # 결과적으로 해당하는 datetime 날자의 조식, 중식, 석식이 구분된 dict 리턴
     req = requests.get('http://tip.kpu.ac.kr/front/boardview.do?pkid=13284&currentPage=1&searchField=ALL&menuGubun=2&bbsConfigFK=27&searchLowItem=ALL&searchValue')
     bs = bs4.BeautifulSoup(req.text, 'html.parser')
@@ -35,14 +35,14 @@ def getMenuDict():
     menuTableRows = menuTable('tr')[0:8] # 날자와 메뉴까지만 포함
     index = getMenuIndex(menuTableRows, datetimeObject)
     if index == -1:
-        return{'breakfast' : '업데이트되지 않았습니다', 'lunch' : '업데이트되지 않았습니다', 'dinner' : '업데이트되지 않았습니다'}
+        return{'breakfast' : ' 업데이트되지 않았습니다', 'lunch' : ' 업데이트되지 않았습니다', 'dinner' : ' 업데이트되지 않았습니다'}
 
     result = get(menuTableRows, index)
     print(str(result))
     return result
 
 def get(menuTableRows, index):
-    print('get(menuTableRows,%s)'%(index))
+    #print('get(menuTableRows,%s)'%(index))
     # 우선 해당 날자의 메뉴들에 접근해야 함.
     size1 = len(menuTableRows[1]('td')) # 조식행 사이즈
     size2 = len(menuTableRows[2]('td')) # 중식행
@@ -53,20 +53,26 @@ def get(menuTableRows, index):
 
     breakfastRows = list()
     for row in menuTableRows[1]('td')[1 : size1] + menuTableRows[5]('td')[1 : size5]:
-        print('breakfastRows = {}'.format(row.get_text()))
-        breakfastRows.append(row.get_text(' ').replace('\n', ' '))
+        #print('breakfastRows = {}'.format(row.get_text()))
+        breakfast = row.get_text(' ').replace('\n', ' ')
+        breakfast = re.sub('\s+', ' ', breakfast)
+        breakfastRows.append(breakfast)
 
     lunchRows = list()
     for row in menuTableRows[2]('td')[1 : size2] + menuTableRows[6]('td')[1 : size6]:
-        lunchRows.append(row.get_text(' ').replace('\n', ' '))
+        lunch = row.get_text(' ').replace('\n', ' ')
+        lunch = re.sub('\s+', ' ', lunch)
+        lunchRows.append(lunch)
 
     dinnerRows = list()
     for row in menuTableRows[3]('td')[1 : size3] + menuTableRows[7]('td')[1 : size7]:
-        dinnerRows.append(row.get_text(' ').replace('\n', ' '))
+        dinner = row.get_text(' ').replace('\n', ' ')
+        dinner = re.sub('\s+', ' ', dinner)
+        dinnerRows.append(dinner)
 
-    print('len(breakfastRows) = %s'%len(breakfastRows))
-    print('len(lunchRows) = %s'%len(lunchRows))
-    print('len(dinnerRows) = %s'%len(dinnerRows))
+    #print('len(breakfastRows) = %s'%len(breakfastRows))
+    #print('len(lunchRows) = %s'%len(lunchRows))
+    #print('len(dinnerRows) = %s'%len(dinnerRows))
 
     if min([len(breakfastRows), len(lunchRows), len(dinnerRows)]) - 1 < index:
         index = min([len(breakfastRows), len(lunchRows), len(dinnerRows)])
@@ -75,14 +81,14 @@ def get(menuTableRows, index):
         return {'breakfast' : breakfastRows[index], 'lunch' : lunchRows[index], 'dinner' : dinnerRows[index]}
 
 def getMenuIndex(menuTableRows, datetimeObject):
-    print('getMenuIndex()')
+    #print('getMenuIndex()')
     # 해당 날자(datetimeObject)에 해당하는 메뉴의 인덱스를 확인한다
     menuDatetimeList = getMenusDatetimeList(menuTableRows)
     for item in menuDatetimeList:
         if (datetimeObject - item).days == 0:
-            print(str(item))
+            #print(str(item))
             return menuDatetimeList.index(item)
-    print('탐색된 날자 없음' + str(datetimeObject))
+    #print('탐색된 날자 없음' + str(datetimeObject))
     return -1 # 탐색된 날자 없음
 
 def getMenusDatetimeList(menuTableRows):

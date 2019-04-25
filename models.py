@@ -506,6 +506,14 @@ class User(models.Model):
         except:
             return None
 
+    def getByKey(user_key):
+        try:
+            user = User.objects.get(user_key = user_key)
+            return user
+        except:
+            return None
+
+
     def getGroupNameOrNone(self):
         try:
             return self.group.group_name
@@ -516,6 +524,7 @@ class User(models.Model):
         try: return User.objects.get(user_name = user_name)
         except:
             return None
+
 
     def setGroup(self, group):
         self.group = group
@@ -608,7 +617,12 @@ class Mail(models.Model):
         elif date.hour > 12:
             hour = '오후 ' + str(date.hour - 12)
 
-        botMessage = str(date.year) + '년 ' + str(date.month) + '월 ' + str(date.day) + '일 ' + week[date.weekday()] + '\n' + hour + '시 ' + str(date.minute) + '분\n' + '발신자 : '  + str(mail.sender.user_name) + '\n\n' + mail.message
+        #botMessage = str(date.year) + '년 ' + str(date.month) + '월 ' + str(date.day) + '일 ' + week[date.weekday()] + '\n' + hour + '시 ' + str(date.minute) + '분\n' + '발신자 : '  + str(mail.sender.user_name) + '\n\n' + mail.message
+
+        botMessage = '{}년 {}월 {}일 {}\n'.format(str(date.year), str(date.month), str(date.day), week[date.weekday()])
+        botMessage += '{}시 {}분\n'.format(hour, str(date.minute))
+        botMessage += '발신자 : {}({})\n\n'.format(str(mail.sender.user_name), str(mail.sender.user_key))
+        botMessage += '{}'.format(mail.message)
 
         mail.delete()
 

@@ -33,6 +33,24 @@ def getFuncMessage(user, response):
         botText = '\'' + userMessage + '\'\n메시지가 전달되었습니다!'
         return textMessage(botText)
 
+    elif response.func == 'sendMail_admin':
+        User = getattr(importlib.import_module('main.models'), 'User')
+        Mail = getattr(importlib.import_module('main.models'), 'Mail')
+
+        messageList = eval(user.getMessageList())
+
+        userMessage = messageList.pop()
+        target_user_key = messageList.pop()
+
+        target_user = User.getByKey(target_user_key)
+        if not target_user:
+            return textMessage('존재하지 않는 user_key')
+
+        Mail.sendMail(user, target_user, userMessage)
+
+        botText = '\'' + userMessage + '\'\n메시지가 전달되었습니다!'
+        return textMessage(botText)
+
     elif response.func == 'readMail': # admin만 호출 가능
         Mail = getattr(importlib.import_module('main.models'), 'Mail')
         botText = Mail.readMail(user)
@@ -69,17 +87,44 @@ def getFuncMessage(user, response):
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
 
+        # 특정 일자는 셔틀버스 운영휴무 알림
+        targetDates = ['2018-05-05', '2018-05-07', '2018-05-22']
+
+        for targetDate in targetDates:
+            if datetime.datetime.now().date() == datetime.datetime.strptime(targetDate, '%Y-%m-%d').date():
+                isBreakDay = True
+                break
+            else:
+                isBreakDay = False
+        # 휴무 여부 확인 알고리즘 종료
+
         if userMessage == '정왕역' or userMessage == 'ㅈㅇㅇ':
             botText = metroMod.getMetroText('정왕')
+
         elif re.search('정왕역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅈㅇ', userMessage):
             botText = Shuttle.getShuttleText('정왕역', '학교') + '\n' + busMod.getBusText('정왕역환승센터')
+
+            if isBreakDay:
+                botText = '오늘 정왕역 셔틀은 운행 하지 않습니다'
+                botText += '\n\n' + busMod.getBusText('정왕역환승센터')
+
         elif re.search('학교\s?[(셔틀)(버스)]', userMessage) or re.search('ㅎ[ㄱㄳ]', userMessage) or re.search('3400', userMessage):
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') + '\n' + busMod.getBusText('시흥시외버스터미널')
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + metroMod.getMetroText('정왕') 
             #botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')  + '\n' + metroMod.getMetroText('정왕')
             botText = Shuttle.getShuttleText('학교', '정왕역') + '\n' + Shuttle.getShuttleText('학교', '오이도역') + '\n' + Shuttle.getShuttleText('시화터미널', '강남역', ' 3400번 광역버스')
+
+
+            if isBreakDay:
+                botText = '오늘 정왕역/오이도역 셔틀은 운행 하지 않습니다'
+                botText += '\n\n' + Shuttle.getShuttleText('시화터미널', '강남역', '3400번 광역버스')
+
         elif re.search('오이도역?\s?[(셔틀)(버스)]', userMessage) or re.search('ㅇㅇㄷ', userMessage):
             botText = Shuttle.getShuttleText('오이도역', '학교')
+
+            if isBreakDay:
+                botText = '오늘 오이도역 셔틀은 운행 하지 않습니다'
+
         else:
             botText = '셔틀/지하철 도착시간을 알고싶으시다면..\n\'정왕셔틀\'(ㅈㅇㅅㅌ),\n\'학교셔틀\'(ㅎㄱㅅㅌ),\n\'오이도셔틀\'(ㅇㅇㄷㅅㅌ),\n\'정왕역\'(ㅈㅇㅇ)\n이라고 물어보세요!'
         return textMessage(botText)
@@ -88,26 +133,38 @@ def getFuncMessage(user, response):
         Miga = getattr(importlib.import_module('main.models'), 'Miga')
         Semicon = getattr(importlib.import_module('main.models'), 'Semicon')
         menuDict = sunfoodMod.getMenuDict()
-        botText = '[TIP 선푸드]'
+
+        today = datetime.datetime.now().date()
+
+        botText = '{}월 {}일 오늘의 메뉴입니다!\n\n'.format(today.month, today.day)
+
+        botText += '[TIP 선푸드]'
         botText += '\n' + '(조식)' + menuDict['breakfast']
         botText += '\n' + '(중식)' + menuDict['lunch']
         botText += '\n' + '(석식)' + menuDict['dinner']
 
-        botText += '\n\n[E동 식당]'
-        botText += '\nhttp://ibook.kpu.ac.kr/Viewer/YP7504RLX8E6'
+        #botText += '\n\n[E동 식당]'
+        #botText += '\nhttp://ibook.kpu.ac.kr/Viewer/YP7504RLX8E6'
 
-        #botText = '[TIP 선푸드]'
-        #botText += '\n' + '(조식)' + ''
-        #botText += '\n\n' + '(중식)' + 
-        #botText += '\n\n' + '(석식)' + 
+        #botText += '[TIP 선푸드]'
+        #botText += '\n' + '(조식)' + ' 쌀밥 참치김치찌개 떡갈비피망조림 계란찜 진미채야채무침 배추김치'
+        #botText += '\n' + '(중식)' + ' 주먹밥 꼬치어묵우동 야채비빔만두 김가루 쪽파단무지무침 배추김치'
+        #botText += '\n' + '(석식)' + ' 쌀밥 소고기국밥 어묵조림 양파쌈장무침 배추김치'
+
+        #botText += '[TIP 선푸드]'
+        #botText += '\n' + '(조식)' + ' 쌀밥 연두부팽이버섯국 닭볶음탕 느타리버섯볶음 오이무침 배추김치'
+        #botText += '\n' + '(중식)' + ' 후리가케주먹밥 미역국 열무비빔국수 찐계란 음료수 배추김치'
+        #botText += '\n' + '(석식)' + ' 쌀밥 미소된장국 샤워돈까스 양배추샐러드 매쉬드포테이토 볶음김치'
 
         if Miga.getMenu():
             botText += '\n\n' + '[미가식당]' + '\n' + Miga.getMenu()
 
         if Semicon.getMenu():
-            botText += '\n\n' + '[세미콘식당]' + '\n' + Semicon.getMenu()
+            botText += '\n\n' + '[세미콘식당] 11:30~1:40 / 4:30~6:30' + '\n' + Semicon.getMenu()
 
-        botText += '\n\n' + '"ㅁㄴ" 명령어로도 오늘의 메뉴를 알수있어요!'
+        #botText += '\n\n' + '"ㅁㄴ" 명령어로도 오늘의 메뉴를 알수있어요!'
+        botText += '\n\n' + '* 각 외부식당 사장님이 직접 등록하므로 메뉴 업데이트가 지연될 수 있습니다'
+        botText += '\n' + '* ㅁㄴ 명령어로도 메뉴를 알 수 있어요'
 
         return textMessage(botText)
 
@@ -116,10 +173,14 @@ def getFuncMessage(user, response):
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
 
-        if not re.search('중식.+$', userMessage):
-            userMessage = '중식 ' + userMessage
+        if not re.search('^\s?중식.+', userMessage):
+            userMessage = '(중식) ' + userMessage
 
-        userMessage = re.sub('\s*[억석]식', '\n석식', userMessage)
+        userMessage = re.sub('^\s+중식\s+', '(중식) ', userMessage)
+
+        userMessage = re.sub('\s+', ' ', userMessage)
+
+        userMessage = re.sub('\s*[억석][십식]\s?', '\n(석식) ', userMessage)
 
         Semicon.createOrUpdateMenu(menu = userMessage)
 
@@ -129,6 +190,22 @@ def getFuncMessage(user, response):
         Miga = getattr(importlib.import_module('main.models'), 'Miga')
         messageList = eval(user.getMessageList())
         userMessage = messageList.pop()
+
+        userMessage = re.sub('\n+', ' ', userMessage)
+
+        userMessage = re.sub('그?\s?외\s?$', '', userMessage)
+
+        userMessage = re.sub('\s+', ' ', userMessage)
+
+        if not re.search('^\s?중식', userMessage):
+            userMessage = '(중식) ' + userMessage
+        else:
+            userMessage = re.sub('중식', '(중식) ', userMessage)
+
+        userMessage = re.sub('\s+', ' ', userMessage)
+
+        userMessage = re.sub('\s*[억석][십식]\s?', '\n(석식) ', userMessage)
+
         Miga.createOrUpdateMenu(menu = userMessage)
 
         return textMessage('미가식당 메뉴가 등록되었습니다!\n문의 : 010-9269-2298')
@@ -142,6 +219,7 @@ def getFuncMessage(user, response):
         typeMessage = messageList.pop() # '교수검색' or '강의검색'
 
         resultText = kpuwatchMod.getKPUWatchText(typeMessage, userMessage)
+        return textMessage('KPUWatch가 산기인과 통합된 관계로 종료합니다.')
         if resultText:
             return linkMessage(resultText, 'KPUWatch에서 보기', 'http://kpuwatch.com/bbs/search.php?url=http%3A%2F%2Fkpuwatch.com%2Fbbs%2Fsearch.php&stx=' + userMessage)
         else:
@@ -245,6 +323,30 @@ def getFuncMessage(user, response):
             text += '{}일 전({}) 사용자 수 {}명\n'.format(i, weekday[target_date.weekday()], count)
 
         return textMessage(text)
+
+    elif response.func == 'love':
+        dDay_dict = {'김재형' : '2015-08-13',
+                '임종길' : '2016-07-22',
+                '채상원' : '2017-08-22'}
+
+        now = datetime.datetime.now()
+
+        text = str()
+
+        for i in dDay_dict:
+            dday = now - datetime.datetime.strptime(dDay_dict[i], '%Y-%m-%d')
+            text += '{}, {}부터 사귐.\n 고로 {}일째 연애중!\n\n'.format(i, dDay_dict[i], dday.days)
+
+        text += '윤서율, NULL부터 사귐.\n 고로 -1일째 연애중!\n\n'
+        text += '\n결론: 헤어지지말고 오래오래 사귀셈'
+
+        return textMessage(text)
+
+    elif response.func == 'chaesangwon':
+        #datetime.datetime.
+        pass
+
+
 
 def linkMessage(botText, label, url):
     return {'message' : {'text' : botText, 'message_button' : {'label' : label, 'url' : url}}}
